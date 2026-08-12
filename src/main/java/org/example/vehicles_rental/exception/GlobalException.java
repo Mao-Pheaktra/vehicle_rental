@@ -23,4 +23,10 @@ public class GlobalException{
     public ResponseEntity<?> handleEmailAndPasswordNotMatch(EmailAndPasswordNotMatch e){
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
     }
+    @ExceptionHandler(TooManyRequestException.class)
+    public ResponseEntity<?> handleTooManyRequest(TooManyRequestException e) {
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(e.getMessage());
+    }
 }

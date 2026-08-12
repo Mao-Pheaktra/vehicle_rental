@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.vehicles_rental.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -21,7 +22,12 @@ public class SecurityConfig {
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth->auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/**").authenticated()
+                        .requestMatchers(HttpMethod.POST,"/api/users/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE,"/api/users/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,"/api/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/**", "/error/**").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
