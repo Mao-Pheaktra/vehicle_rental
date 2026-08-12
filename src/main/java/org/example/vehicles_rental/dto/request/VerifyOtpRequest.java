@@ -1,6 +1,5 @@
 package org.example.vehicles_rental.dto.request;
 
-import lombok.Builder;
 import lombok.Data;
 
 @Data

@@ -9,9 +9,5 @@ public class ImageConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry){
         registry.addResourceHandler("/profileImage/**").addResourceLocations("file:profileImage/");
-
-        registry.addResourceHandler("/upload")
-                .addResourceLocations("file:upload/");
-
     }
 }
