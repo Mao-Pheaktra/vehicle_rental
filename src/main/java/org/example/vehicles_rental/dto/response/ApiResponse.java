@@ -5,10 +5,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class ApiResponse <T>{
+@AllArgsConstructor
+public class ApiResponse<T> {
     private String msg;
     private Integer status;
     private T data;
+
 }

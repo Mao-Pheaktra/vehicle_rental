@@ -46,21 +46,19 @@ public class AuthServiceImple implements AuthService {
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
-                .pwd(user.getPwd())
                 .role(user.getRole())
                 .build();
         return RegisterResponse.builder()
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
-                .pwd(user.getPwd())
                 .role(user.getRole())
                 .build();
     }
     @Override
     public LoginResponse login(LoginRequest loginRequest){
         User user = userRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(()-> new EmaliAlreadyExists("Incorrect email"));
+                .orElseThrow(()-> new EmaliAlreadyExists("Incorrect email or password"));
         if (!passwordEncoder.matches(loginRequest.getPwd(), user.getPwd())){
             throw new EmailAndPasswordNotMatch("Email and password are not match");
         }
@@ -77,19 +75,26 @@ public class AuthServiceImple implements AuthService {
                 .build();
     }
     @Override
-    public VerifyOtpResponse verifyOtp(VerifyOtpRequest verifyOtpRequest){
+    public VerifyOtpResponse verifyOtp(VerifyOtpRequest verifyOtpRequest) {
         User user = userRepository.findByEmail(verifyOtpRequest.getEmail())
-                .orElseThrow(()-> new NotFoundException("Email Not Found"));
+                .orElseThrow(() -> new NotFoundException("Email Not Found"));
         Otp otp = otpRepository.findByUser(user)
-                .orElseThrow(()-> new NotFoundException("OTP Not Found"));
-        if (otp.getExpiryTime().isBefore(LocalDateTime.now())){
-            throw new InvalidOTP("Invalid OTP");
+                .orElseThrow(() -> new NotFoundException("OTP Not Found"));
+        if (!otp.getOtp().equals(verifyOtpRequest.getOtp())) {
+            throw new InvalidOTP("Incorrect OTP");
+        }
+
+        if (otp.getExpiryTime().isBefore(LocalDateTime.now())) {
+            throw new InvalidOTP("OTP has expired");
         }
         otp.setVerified(true);
-        userRepository.save(user);
 
         user.setActive(true);
+        userRepository.save(user);
+
         otpRepository.delete(otp);
+
+
 
         return VerifyOtpResponse.builder()
                 .message("Email verified successfully")
