@@ -8,14 +8,13 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class CategoryResponse {
+public class Vehicle_imageResponse {
     private Long id;
-    private String category_name;
-    private String description;
-    private LocalDateTime  created_at;
+    private String vehicle_name;
+    private String image;
+    private LocalDateTime created_at;
     private LocalDateTime updated_at;
-
 }
