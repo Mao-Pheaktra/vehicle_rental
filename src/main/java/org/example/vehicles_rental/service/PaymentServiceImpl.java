@@ -6,6 +6,8 @@ import org.example.vehicles_rental.dto.response.PaymentResponse;
 import org.example.vehicles_rental.entity.Booking;
 import org.example.vehicles_rental.entity.Payment;
 import org.example.vehicles_rental.entity.PaymentMethod;
+import org.example.vehicles_rental.enums.PaymentMethodStatus;
+import org.example.vehicles_rental.enums.PaymentStatus;
 import org.example.vehicles_rental.exception.BookingNotFound;
 import org.example.vehicles_rental.exception.PaymentFailed;
 import org.example.vehicles_rental.exception.PaymentMethodNotFound;
@@ -16,6 +18,7 @@ import org.example.vehicles_rental.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -32,25 +35,17 @@ public class PaymentServiceImpl implements PaymentService {
                 .findById(request.getPaymentMethodId())
                         .orElseThrow(() -> new PaymentMethodNotFound(
                                 request.getPaymentMethodId()));
-        if (request.getAmount() == null || request.
-                getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new PaymentFailed("Payment amount must be greater than zero");
+        if (paymentMethod.getStatus() != PaymentMethodStatus.ACTIVE) {
+            throw new IllegalArgumentException(
+                    "Payment method is currently inactive"
+            );
         }
         Payment payment = new Payment();
         payment.setBooking(booking);
         payment.setPaymentMethod(paymentMethod);
-        payment.setAmount(request.getAmount());
-        payment.setTransactionId(request.getTransactionId());
-        payment.setPaymentStatus(
-                request.getPaymentStatus() != null
-                        ? request.getPaymentStatus()
-                        : "PENDING"
-        );
-        payment.setPaymentDate(
-                request.getPaymentDate() != null
-                        ? request.getPaymentDate()
-                        : java.time.LocalDate.now()
-        );
+        payment.setAmount(booking.getTotalPrice());
+        payment.setPaymentStatus(String.valueOf(PaymentStatus.PENDING));
+        payment.setPaymentDate(LocalDate.now());
         Payment saved = paymentRepository.save(payment);
         return mapToResponse(saved);
     }
@@ -68,6 +63,13 @@ public class PaymentServiceImpl implements PaymentService {
                 .toList();
     }
     @Override
+    public PaymentResponse getByBooking(Long bookingId){
+        Payment payment = paymentRepository.findByBookingId(bookingId).orElseThrow(
+                (() -> new PaymentNotFound("Payment not found for booking:"+ bookingId))
+        );
+        return mapToResponse(payment);
+    }
+    @Override
     public PaymentResponse update(Long id, PaymentRequest request) {
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new PaymentNotFound(id));
@@ -75,6 +77,7 @@ public class PaymentServiceImpl implements PaymentService {
             Booking booking = bookingRepository.findById(request.getBookingId())
                             .orElseThrow(() -> new BookingNotFound(request.getBookingId()));
             payment.setBooking(booking);
+            payment.setAmount(booking.getTotalPrice());
         }
         if (request.getPaymentMethodId() != null) {
             PaymentMethod paymentMethod =
@@ -83,22 +86,8 @@ public class PaymentServiceImpl implements PaymentService {
                                     request.getPaymentMethodId()));
             payment.setPaymentMethod(paymentMethod);
         }
-        if (request.getAmount() != null) {
-            if (request.getAmount()
-                    .compareTo(BigDecimal.ZERO) <= 0) {
-                throw new PaymentFailed("Payment amount must be greater than zero");
-            }
-            payment.setAmount(request.getAmount());
-        }
-        if (request.getTransactionId() != null) {
-            payment.setTransactionId(request.getTransactionId());
-        }
-        if (request.getPaymentStatus() != null) {
-            payment.setPaymentStatus(request.getPaymentStatus());
-        }
-        if (request.getPaymentDate() != null) {
-            payment.setPaymentDate(request.getPaymentDate());
-        }
+
+
         Payment updated = paymentRepository.save(payment);
         return mapToResponse(updated);
     }
@@ -109,15 +98,17 @@ public class PaymentServiceImpl implements PaymentService {
         paymentRepository.delete(payment);
     }
     private PaymentResponse mapToResponse(Payment payment) {
-        return new PaymentResponse(
-                payment.getId(),
-                payment.getBooking().getId(),
-                payment.getAmount(),
-                payment.getPaymentMethod().getId(),
-                payment.getPaymentMethod().getMethodName(),
-                payment.getTransactionId(),
-                payment.getPaymentStatus(),
-                payment.getPaymentDate()
-        );
+        return PaymentResponse.builder()
+                .id(payment.getId())
+                .bookingId(payment.getBooking().getId())
+                .paymentMethodId(payment.getPaymentMethod().getId())
+                .paymentMethodName(
+                        payment.getPaymentMethod().getPaymentMethodName()
+                )
+                .amount(payment.getAmount())
+                .transactionId(payment.getTransactionId())
+                .status(PaymentStatus.valueOf(payment.getPaymentStatus()))
+                .paymentDate(payment.getPaymentDate())
+                .build();
     }
 }

@@ -32,6 +32,14 @@ public class PaymentController {
         return ResponseEntity.ok(
                 new ApiResponse<>("Payment retrieved successfully",200, paymentService.getById(id)));
     }
+    @GetMapping("/booking/{bookingId}")
+    public ResponseEntity<PaymentResponse> getByBooking(
+            @PathVariable Long bookingId) {
+
+        return ResponseEntity.ok(
+                paymentService.getByBooking(bookingId)
+        );
+    }
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<PaymentResponse>> update(
             @PathVariable Long id,

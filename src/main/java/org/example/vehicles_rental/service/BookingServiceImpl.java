@@ -6,6 +6,7 @@ import org.example.vehicles_rental.dto.response.BookingResponse;
 import org.example.vehicles_rental.entity.Booking;
 import org.example.vehicles_rental.entity.User;
 import org.example.vehicles_rental.entity.Vehicle;
+import org.example.vehicles_rental.enums.BookingStatus;
 import org.example.vehicles_rental.exception.BookingNotFound;
 import org.example.vehicles_rental.exception.InvalidBooking;
 import org.example.vehicles_rental.exception.UserNotFound;
@@ -33,17 +34,22 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new UserNotFound("User not found"));
         Vehicle vehicle = vehicleRepository.findById(request.getVehicleId())
                 .orElseThrow(() -> new VehicleNotFound("Vehicle not found"));
-        if (request.getPickupDate() == null || request.getReturnDate() == null) {
-            throw new InvalidBooking("Pickup date and return date are required");
-        }
-        if (request.getReturnDate().isBefore(request.getPickupDate())) {
-            throw new InvalidBooking("Return date cannot be before pickup date");
-        }
-        long days = ChronoUnit.DAYS.between(
+       if (!request.getPickupDate().isBefore(request.getReturnDate())){
+           throw new InvalidBooking("Return date must be after pickup date");
+       }
+       boolean alreadyBooked = bookingRepository.existsByVehicleIdAndPickupDateLessThanAndReturnDateGreaterThan(
+               request.getVehicleId(),
+               request.getReturnDate(),
+               request.getPickupDate()
+       );
+       if (alreadyBooked){
+           throw new InvalidBooking("Vehicle is already booked for these dates");
+       }
+        int totalDays = Math.toIntExact(ChronoUnit.DAYS.between(
                 request.getPickupDate(),
                 request.getReturnDate()
-        );
-        int totalDays = (int) Math.max(days, 1);
+        ));
+
         BigDecimal totalPrice = vehicle.getPricePerDay()
                         .multiply(BigDecimal.valueOf(totalDays));
         Booking booking = new Booking();
@@ -53,9 +59,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setReturnDate(request.getReturnDate());
         booking.setTotalDays(totalDays);
         booking.setTotalPrice(totalPrice);
-
-        booking.setStatus(request.getStatus() != null ?
-                request.getStatus() : "PENDING");
+        booking.setStatus(BookingStatus.PENDING);
         Booking saved = bookingRepository.save(booking);
         return mapToResponse(saved);
     }
@@ -95,9 +99,26 @@ public class BookingServiceImpl implements BookingService {
         if (booking.getPickupDate() == null || booking.getReturnDate() == null) {
             throw new InvalidBooking("Pickup date and return date are required");
         }
-        if (booking.getReturnDate()
-                .isBefore(booking.getPickupDate())) {
-            throw new InvalidBooking("Return date cannot be before pickup date");
+        if (!booking.getReturnDate()
+                .isAfter(booking.getPickupDate())) {
+            throw new InvalidBooking(
+                    "Return date must be after pickup date"
+            );
+        }
+        // Check vehicle availability
+        boolean alreadyBooked =
+                bookingRepository
+                        .existsByVehicleIdAndIdNotAndPickupDateLessThanAndReturnDateGreaterThan(
+                                booking.getVehicle().getId(),
+                                booking.getId(),
+                                booking.getReturnDate(),
+                                booking.getPickupDate()
+                        );
+
+        if (alreadyBooked) {
+            throw new InvalidBooking(
+                    "Vehicle is already booked for these dates"
+            );
         }
         long days = ChronoUnit.DAYS.between(
                 booking.getPickupDate(),

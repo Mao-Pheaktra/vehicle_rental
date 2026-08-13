@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.vehicles_rental.enums.Gender;
 import org.example.vehicles_rental.enums.Role;
 
 @Entity
@@ -23,6 +24,10 @@ public class User {
     private String pwd;
     @Enumerated(EnumType.STRING)
     private Role role;
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
+    private String tell;
+    private String profileImage;
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Otp otp;
     private boolean isActive=false;

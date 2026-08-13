@@ -1,6 +1,6 @@
 package org.example.vehicles_rental.enums;
 
-public enum PStatus {
+public enum PaymentStatus {
     PENDING,
     PAID,
     FAILED,

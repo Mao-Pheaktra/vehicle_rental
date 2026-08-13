@@ -3,6 +3,7 @@ package org.example.vehicles_rental.dto.request;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.vehicles_rental.enums.BookingStatus;
 
 import java.time.LocalDate;
 
@@ -14,5 +15,5 @@ public class BookingRequest {
     private Long vehicleId;
     private LocalDate pickupDate;
     private LocalDate returnDate;
-    private String BStatus;
+    private BookingStatus status;
 }

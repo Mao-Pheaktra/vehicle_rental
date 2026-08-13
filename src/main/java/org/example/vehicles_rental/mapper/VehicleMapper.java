@@ -19,7 +19,7 @@ public class VehicleMapper {
                 .fuel_type(vehicle.getFuel_type())
                 .seat(vehicle.getSeat())
                 .description(vehicle.getDescription())
-                .price_per_day(vehicle.getPrice_per_day())
+                .pricePerDay(vehicle.getPricePerDay())
                 .status(vehicle.getStatus())
                 .create_at(vehicle.getCreated_at())
                 .update_at(vehicle.getUpdated_at())

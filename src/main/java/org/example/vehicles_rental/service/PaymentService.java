@@ -9,6 +9,7 @@ public interface PaymentService {
     PaymentResponse create(PaymentRequest request);
     PaymentResponse getById(Long id);
     List<PaymentResponse> getAll();
+    PaymentResponse getByBooking(Long bookingId);
     PaymentResponse update(Long id, PaymentRequest request);
     void delete(Long id);
 }

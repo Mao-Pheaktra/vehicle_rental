@@ -1,5 +1,6 @@
 package org.example.vehicles_rental.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.vehicles_rental.dto.request.LoginRequest;
 import org.example.vehicles_rental.dto.request.RegisterRequest;
@@ -18,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -30,8 +32,29 @@ public class AuthServiceImple implements AuthService {
 
     @Override
     public RegisterResponse register(RegisterRequest registerRequest){
-        if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()){
+
+        Optional<User> existingUser = userRepository.findByEmail(registerRequest.getEmail());
+        if (existingUser.isPresent()){
+            User user = existingUser.get();
+
+            if (!user.isActive()){
+                user.setName(registerRequest.getName());
+                user.setPwd(passwordEncoder.encode(registerRequest.getPwd()));
+
+                userRepository.save(user);
+
+                otpService.createOtp(user);
+                return RegisterResponse.builder()
+                        .id(user.getId())
+                        .name(user.getName())
+                        .email(user.getEmail())
+                        .pwd(user.getPwd())
+                        .role(user.getRole())
+                        .message("Registration successful. Please verify the OTP sent to your email.")
+                        .build();
+            }
             throw new EmaliAlreadyExists("Email already exists");
+
         }
         User user = User.builder()
                 .name(registerRequest.getName())
@@ -42,17 +65,13 @@ public class AuthServiceImple implements AuthService {
                 .build();
         user = userRepository.save(user);
         otpService.createOtp(user);
-        RegisterResponse registerResponse = RegisterResponse.builder()
-                .id(user.getId())
-                .name(user.getName())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .build();
+
         return RegisterResponse.builder()
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())
+                .message("Registration successful. Please verify the OTP sent to your email.")
                 .build();
     }
     @Override
@@ -75,26 +94,27 @@ public class AuthServiceImple implements AuthService {
                 .build();
     }
     @Override
-    public VerifyOtpResponse verifyOtp(VerifyOtpRequest verifyOtpRequest) {
+    @Transactional
+    public VerifyOtpResponse verifyOtp(VerifyOtpRequest verifyOtpRequest){
         User user = userRepository.findByEmail(verifyOtpRequest.getEmail())
-                .orElseThrow(() -> new NotFoundException("Email Not Found"));
+                .orElseThrow(()-> new NotFoundException("Email Not Found"));
         Otp otp = otpRepository.findByUser(user)
-                .orElseThrow(() -> new NotFoundException("OTP Not Found"));
-        if (!otp.getOtp().equals(verifyOtpRequest.getOtp())) {
-            throw new InvalidOTP("Incorrect OTP");
-        }
-
+                .orElseThrow(()-> new NotFoundException("OTP Not Found"));
         if (otp.getExpiryTime().isBefore(LocalDateTime.now())) {
-            throw new InvalidOTP("OTP has expired");
+            otpRepository.delete(otp);
+            if (!user.isActive()) {
+                userRepository.delete(user);
+            }
+            throw new OtpExpireException("OTP expired. Please register again");
+        }
+        if (!otp.getOtp().equals(verifyOtpRequest.getOtp())){
+            throw new InvalidOTP("Invalid OTP");
         }
         otp.setVerified(true);
-
         user.setActive(true);
+
         userRepository.save(user);
-
         otpRepository.delete(otp);
-
-
 
         return VerifyOtpResponse.builder()
                 .message("Email verified successfully")

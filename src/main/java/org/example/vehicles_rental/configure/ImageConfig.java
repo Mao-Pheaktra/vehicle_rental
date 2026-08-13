@@ -11,6 +11,4 @@ public class ImageConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/profileImage/**").addResourceLocations("file:profileImage/");
         registry.addResourceHandler("/upload/**").addResourceLocations("file:upload/");
     }
-
-
 }

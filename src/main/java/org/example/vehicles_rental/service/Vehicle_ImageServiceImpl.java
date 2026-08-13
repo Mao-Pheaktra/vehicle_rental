@@ -32,11 +32,8 @@ public class Vehicle_ImageServiceImpl implements Vehicle_ImageService {
 
     @Override
     public Vehicle_imageResponse create(Vehicle_imageRequest vehicle_imageRequest, MultipartFile image)throws IOException {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-
         String imageName = image.getOriginalFilename();
-        String imageUrl = UUID.randomUUID().toString()+"_"+image.getOriginalFilename();
+        String imageUrl = UUID.randomUUID().toString()+"_"+imageName;
         Path path = Paths.get("upload");
         String fileUrl = "http://localhost:8080/upload/"+imageUrl;
         if(!Files.exists(path)){
@@ -49,7 +46,7 @@ public class Vehicle_ImageServiceImpl implements Vehicle_ImageService {
                 .orElseThrow(()->new RuntimeException("vehicle id not found."));
         Vehicle_Image vehicle_image = Vehicle_Image.builder()
                 .vehicle(vehicle)
-                .image(imageUrl)
+                .image(fileUrl)
                 .build();
         vehicle_imageRepository.save(vehicle_image);
         return vehicle_ImageMapper.toVehicleImageResponse(vehicle_image);
@@ -79,11 +76,9 @@ public class Vehicle_ImageServiceImpl implements Vehicle_ImageService {
 
     @Override
     public Vehicle_imageResponse update(Long id, Vehicle_imageRequest vehicle_imageRequest, MultipartFile image) throws IOException {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
 
         String imageName = image.getOriginalFilename();
-        String imageUrl = UUID.randomUUID().toString()+"_"+image.getOriginalFilename();
+        String imageUrl = UUID.randomUUID().toString()+"_"+imageName;
         Path path = Paths.get("upload");
         String fileUrl = "http://localhost:8080/upload/"+imageUrl;
         Files.copy(image.getInputStream(),path.resolve(imageUrl));
@@ -94,7 +89,7 @@ public class Vehicle_ImageServiceImpl implements Vehicle_ImageService {
         Vehicle_Image vehicle_image = vehicle_imageRepository.findById(id)
                 .orElseThrow(()->new NotFoundException("Vehicle_Image Id " +id+ " Not Found"));
         vehicle_image.setVehicle(vehicle);
-        vehicle_image.setImage(imageUrl);
+        vehicle_image.setImage(fileUrl);
         vehicle_imageRepository.save(vehicle_image);
         return vehicle_ImageMapper.toVehicleImageResponse(vehicle_image);
     }
@@ -102,7 +97,6 @@ public class Vehicle_ImageServiceImpl implements Vehicle_ImageService {
     @Override
     public void delete(Long id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
         Vehicle_Image vehicle_image = vehicle_imageRepository.findById(id)
                 .orElseThrow(()->new NotFoundException("Vehicle_Image Id " +id+ " Not Found"));
         vehicle_imageRepository.delete(vehicle_image);

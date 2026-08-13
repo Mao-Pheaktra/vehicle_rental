@@ -46,7 +46,7 @@ public class VehicleServiceImpl implements VehicleService {
                 .seat(vehicleRequest.getSeat())
                 .status(vehicleRequest.getStatus())
                 .fuel_type(vehicleRequest.getFuel_type())
-                .price_per_day(vehicleRequest.getPrice_per_day())
+                .pricePerDay(vehicleRequest.getPricePerDay())
                 .plate_number(vehicleRequest.getPlate_number())
                 .transmission(vehicleRequest.getTransmission())
                 .build();
@@ -97,7 +97,7 @@ public class VehicleServiceImpl implements VehicleService {
                 vehicle.setStatus(vehicleRequest.getStatus());
                 vehicle.setFuel_type(vehicleRequest.getFuel_type());
                 vehicle.setPlate_number(vehicleRequest.getPlate_number());
-                vehicle.setPrice_per_day(vehicleRequest.getPrice_per_day());
+                vehicle.setPricePerDay(vehicleRequest.getPricePerDay());
                 vehicle.setTransmission(vehicleRequest.getTransmission());
                 vehicle =vehicleRepository.save(vehicle);
 

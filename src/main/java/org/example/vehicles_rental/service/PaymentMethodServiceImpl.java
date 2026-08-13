@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.vehicles_rental.dto.request.PaymentMethodRequest;
 import org.example.vehicles_rental.dto.response.PaymentMethodResponse;
 import org.example.vehicles_rental.entity.PaymentMethod;
+import org.example.vehicles_rental.enums.PaymentMethodStatus;
 import org.example.vehicles_rental.exception.PaymentMethodNotFound;
 import org.example.vehicles_rental.repository.PaymentMethodRepository;
 import org.springframework.stereotype.Service;
@@ -17,13 +18,9 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
     @Override
     public PaymentMethodResponse create(PaymentMethodRequest request) {
         PaymentMethod paymentMethod = new PaymentMethod();
-        paymentMethod.setMethodName(request.getMethodName());
+        paymentMethod.setPaymentMethodName(request.getPaymentMethodName());
         paymentMethod.setDescription(request.getDescription());
-        paymentMethod.setStatus(
-                request.getStatus() != null
-                        ? request.getStatus()
-                        : "ACTIVE"
-        );
+        paymentMethod.setStatus(PaymentMethodStatus.ACTIVE);
         PaymentMethod saved = paymentMethodRepository.save(paymentMethod);
         return mapToResponse(saved);
     }
@@ -44,7 +41,7 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
     public PaymentMethodResponse update(Long id, PaymentMethodRequest request) {
         PaymentMethod paymentMethod = paymentMethodRepository.findById(id)
                 .orElseThrow(() -> new PaymentMethodNotFound("Payment method not found"));
-        paymentMethod.setMethodName(request.getMethodName());
+        paymentMethod.setPaymentMethodName(request.getPaymentMethodName());
         paymentMethod.setDescription(request.getDescription());
         paymentMethod.setStatus(request.getStatus());
         PaymentMethod updated = paymentMethodRepository.save(paymentMethod);
@@ -60,7 +57,7 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
             PaymentMethod paymentMethod) {
         return new PaymentMethodResponse(
                 paymentMethod.getId(),
-                paymentMethod.getMethodName(),
+                paymentMethod.getPaymentMethodName(),
                 paymentMethod.getDescription(),
                 paymentMethod.getStatus()
         );

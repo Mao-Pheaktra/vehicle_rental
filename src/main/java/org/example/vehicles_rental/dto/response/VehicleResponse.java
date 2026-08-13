@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.example.vehicles_rental.enums.Status;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -23,7 +24,7 @@ public class VehicleResponse {
     private String transmission;
     private String fuel_type;
     private Integer seat;
-    private Long price_per_day;
+    private BigDecimal pricePerDay;
     private Status status;
     private String description;
     private LocalDateTime create_at;

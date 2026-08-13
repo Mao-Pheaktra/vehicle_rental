@@ -1,5 +1,6 @@
 package org.example.vehicles_rental.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.vehicles_rental.entity.Otp;
 import org.example.vehicles_rental.entity.User;
@@ -17,8 +18,10 @@ public class OtpService {
     public String generateOtp(){
         return String.format("%06d", new Random().nextInt(1000000));
     }
+
+    @Transactional
     public void createOtp(User user){
-        otpRepository.deleteByUser(user);
+        otpRepository.deleteByUserId(user.getId());
         String code = generateOtp();
         Otp otp = Otp.builder()
                 .otp(code)
@@ -27,7 +30,7 @@ public class OtpService {
                 .user(user)
                 .build();
 
-        otpRepository.save(otp);
+        otpRepository.saveAndFlush(otp);
         emailService.sendOtp(user.getEmail(), code);
     }
 }

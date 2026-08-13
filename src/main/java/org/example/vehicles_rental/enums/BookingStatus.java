@@ -1,6 +1,6 @@
 package org.example.vehicles_rental.enums;
 
-public enum BStatus {
+public enum BookingStatus {
     PENDING,
     CONFIRMED,
     CANCELLED,

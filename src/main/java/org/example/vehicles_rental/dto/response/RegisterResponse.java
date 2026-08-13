@@ -14,5 +14,7 @@ public class RegisterResponse {
     private Long id;
     private String name;
     private String email;
+    private String pwd;
     private Role role;
+    private String message;
 }

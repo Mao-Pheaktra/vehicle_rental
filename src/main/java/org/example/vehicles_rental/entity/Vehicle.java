@@ -10,6 +10,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -30,7 +31,8 @@ public class Vehicle {
     private String transmission;
     private String fuel_type;
     private Integer seat;
-    private Long price_per_day;
+    @Column(name = "price_per_day", precision = 10, scale = 2)
+    private BigDecimal pricePerDay;
     @Enumerated(EnumType.STRING)
     private Status status;
     private String description;

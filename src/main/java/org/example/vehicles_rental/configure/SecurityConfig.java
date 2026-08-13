@@ -22,7 +22,7 @@ public class SecurityConfig {
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth->auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/users/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST,"/api/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE,"/api/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT,"/api/users/**").hasRole("ADMIN")
@@ -45,7 +45,27 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST,"/api/vehicle/**").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.DELETE,"/api/vehicle/**").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.PUT,"/api/vehicle/**").hasRole("ADMIN")
-                        .requestMatchers("/api/vehicle_image/**").hasRole("ADMIN")
+
+//                                .requestMatchers("/api/vehicle_image/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/api/vehicle_image/**").authenticated()
+                                .requestMatchers(HttpMethod.POST,"/api/vehicle_image/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE,"/api/vehicle_image/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT,"/api/vehicle_image/**").hasRole("ADMIN")
+//
+                                .requestMatchers(HttpMethod.GET, "/api/bookings/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.POST,"/api/bookings/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE,"/api/bookings/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT,"/api/bookings/**").hasRole("ADMIN")
+
+                                .requestMatchers(HttpMethod.GET, "/api/payments/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.POST,"/api/payments/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE,"/api/payments/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT,"/api/payments/**").hasRole("ADMIN")
+                        
+                                .requestMatchers(HttpMethod.GET, "/api/paymentMethods/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.POST,"/api/paymentMethods/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE,"/api/paymentsMethods/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT,"/api/paymentMethods/**").hasRole("ADMIN")
 
                                 .requestMatchers("/error/**").permitAll()
                                 .anyRequest().authenticated()

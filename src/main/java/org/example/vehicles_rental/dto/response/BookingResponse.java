@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.vehicles_rental.enums.BookingStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,5 +23,5 @@ public class BookingResponse {
     private LocalDate returnDate;
     private Integer totalDays;
     private BigDecimal totalPrice;  
-    private String BStatus;
+    private BookingStatus status;
 }
