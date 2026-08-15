@@ -70,6 +70,8 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/api/admin/dashboard/**").hasRole("ADMIN")
 //                                  User
                                 .requestMatchers("/api/admin/user/**").hasRole("ADMIN")
+//                                    Vehicle
+                                .requestMatchers("/api/admin/vehicle").hasRole("ADMIN")
                         
                                 .requestMatchers("/error/**").permitAll()
                                 .anyRequest().authenticated()
