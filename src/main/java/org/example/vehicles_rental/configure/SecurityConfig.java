@@ -80,6 +80,7 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET,"/api/admin/payment").hasRole("ADMIN")
 //                                    Rental History
                                 .requestMatchers(HttpMethod.GET, "/api/admin/rental_history").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/api/admin/report").hasRole("ADMIN")
                                 .requestMatchers("/error/**").permitAll()
                                 .anyRequest().authenticated()
                 )
