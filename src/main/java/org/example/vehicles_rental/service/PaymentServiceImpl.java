@@ -44,7 +44,7 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setBooking(booking);
         payment.setPaymentMethod(paymentMethod);
         payment.setAmount(booking.getTotalPrice());
-        payment.setPaymentStatus(String.valueOf(PaymentStatus.PENDING));
+        payment.setPaymentStatus(PaymentStatus.PENDING);
         payment.setPaymentDate(LocalDate.now());
         Payment saved = paymentRepository.save(payment);
         return mapToResponse(saved);
@@ -107,7 +107,7 @@ public class PaymentServiceImpl implements PaymentService {
                 )
                 .amount(payment.getAmount())
                 .transactionId(payment.getTransactionId())
-                .status(PaymentStatus.valueOf(payment.getPaymentStatus()))
+                .status(payment.getPaymentStatus())
                 .paymentDate(payment.getPaymentDate())
                 .build();
     }

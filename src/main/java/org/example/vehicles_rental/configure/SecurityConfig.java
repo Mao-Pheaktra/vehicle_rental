@@ -69,9 +69,15 @@ public class SecurityConfig {
 //                                Dashboard
                                 .requestMatchers(HttpMethod.GET, "/api/admin/dashboard/**").hasRole("ADMIN")
 //                                  User
-                                .requestMatchers("/api/admin/user/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET,"/api/admin/user/**").hasRole("ADMIN")
 //                                    Vehicle
                                 .requestMatchers("/api/admin/vehicle").hasRole("ADMIN")
+
+        //                        Category
+                                .requestMatchers(HttpMethod.GET,"/api/admin/category").hasRole("ADMIN")
+
+        //                        Payment
+                                .requestMatchers(HttpMethod.GET,"/api/admin/payment").hasRole("ADMIN")
                         
                                 .requestMatchers("/error/**").permitAll()
                                 .anyRequest().authenticated()

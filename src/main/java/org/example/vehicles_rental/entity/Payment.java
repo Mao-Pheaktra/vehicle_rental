@@ -35,8 +35,9 @@ public class Payment {
     @Column(name = "transaction_id")
     private String transactionId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "payment_status")
-    private String paymentStatus;
+    private PaymentStatus paymentStatus;
 
     @Column(name = "payment_date")
     private LocalDate paymentDate;
@@ -49,7 +50,7 @@ public class Payment {
         this.createdAt = LocalDateTime.now();
 
         if (this.paymentStatus == null) {
-            this.paymentStatus = String.valueOf(PaymentStatus.PENDING);
+            this.paymentStatus = PaymentStatus.PENDING;
         }
 
         if (this.paymentDate == null) {
