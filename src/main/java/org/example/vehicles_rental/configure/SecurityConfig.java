@@ -64,9 +64,11 @@ public class SecurityConfig {
                         
                                 .requestMatchers(HttpMethod.GET, "/api/paymentMethods/**").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.POST,"/api/paymentMethods/**").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.DELETE,"/api/paymentsMethods/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE,"/api/paymentMethods/**").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.PUT,"/api/paymentMethods/**").hasRole("ADMIN")
-
+//                                Dashboard
+                                .requestMatchers(HttpMethod.GET, "/api/admin/dashboard/**").hasRole("ADMIN")
+                        
                                 .requestMatchers("/error/**").permitAll()
                                 .anyRequest().authenticated()
                 )

@@ -18,9 +18,9 @@ public class DashboardResponse {
     private Long availableVehicle;
     private Long activeBooking;
 
-    private BigDecimal mothlyRevenue;
+    private BigDecimal monthlyRevenue;
 
-    private List<RevenueResponse> responses;
+    private List<RevenueResponse> revenueResponses;
     private List<BookingStatisticResponse> bookingStatisticResponses;
     private List<CategoryStatisticResponse> categoryStatisticResponses;
     private List<RecentBookingResponse> recentBookingResponses;
