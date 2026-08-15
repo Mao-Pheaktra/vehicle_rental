@@ -64,9 +64,22 @@ public class SecurityConfig {
                         
                                 .requestMatchers(HttpMethod.GET, "/api/paymentMethods/**").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.POST,"/api/paymentMethods/**").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.DELETE,"/api/paymentsMethods/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.DELETE,"/api/paymentMethods/**").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.PUT,"/api/paymentMethods/**").hasRole("ADMIN")
+//                                Dashboard
+                                .requestMatchers(HttpMethod.GET, "/api/admin/dashboard/**").hasRole("ADMIN")
+//                                  User
+                                .requestMatchers(HttpMethod.GET,"/api/admin/user/**").hasRole("ADMIN")
+//                                    Vehicle
+                                .requestMatchers("/api/admin/vehicle").hasRole("ADMIN")
 
+        //                        Category
+                                .requestMatchers(HttpMethod.GET,"/api/admin/category").hasRole("ADMIN")
+
+        //                        Payment
+                                .requestMatchers(HttpMethod.GET,"/api/admin/payment").hasRole("ADMIN")
+//                                    Rental History
+                                .requestMatchers(HttpMethod.GET, "/api/admin/rental_history").hasRole("ADMIN")
                                 .requestMatchers("/error/**").permitAll()
                                 .anyRequest().authenticated()
                 )
