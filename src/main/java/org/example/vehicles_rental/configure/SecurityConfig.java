@@ -68,6 +68,8 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.PUT,"/api/paymentMethods/**").hasRole("ADMIN")
 //                                Dashboard
                                 .requestMatchers(HttpMethod.GET, "/api/admin/dashboard/**").hasRole("ADMIN")
+//                                  User
+                                .requestMatchers("/api/admin/user/**").hasRole("ADMIN")
                         
                                 .requestMatchers("/error/**").permitAll()
                                 .anyRequest().authenticated()
