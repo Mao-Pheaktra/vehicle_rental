@@ -81,6 +81,22 @@ public class SecurityConfig {
 //                                    Rental History
                                 .requestMatchers(HttpMethod.GET, "/api/admin/rental_history").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.GET, "/api/admin/report").hasRole("ADMIN")
+
+                                .requestMatchers(HttpMethod.GET, "/api/admin/setting/general").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/admin/setting/general").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/api/admin/setting/notification").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/admin/setting/notification").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/api/admin/setting/security").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/admin/setting/security/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/api/admin/setting/payment").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/admin/setting/payment").hasRole("ADMIN")
+
+                                .requestMatchers(HttpMethod.GET, "/api/admin/notification/**").hasRole("ADMIN")
+
+                                .requestMatchers(HttpMethod.GET, "/api/admin/setting/customizer").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/admin/setting/customizer").hasRole("ADMIN")
+
+
                                 .requestMatchers("/error/**").permitAll()
                                 .anyRequest().authenticated()
                 )

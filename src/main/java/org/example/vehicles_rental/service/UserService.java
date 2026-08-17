@@ -1,7 +1,9 @@
 package org.example.vehicles_rental.service;
 
+import org.example.vehicles_rental.admin.setting.dto.request.ChangePasswordRequest;
 import org.example.vehicles_rental.dto.request.UserRequest;
 import org.example.vehicles_rental.dto.response.UserResponse;
+import org.example.vehicles_rental.entity.User;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -13,5 +15,8 @@ public interface UserService {
     UserResponse readById(Long id);
     UserResponse delete(Long id);
     UserResponse update(Long id, UserRequest userRequest, MultipartFile file) throws IOException;
+    void changePassword(
+            ChangePasswordRequest changePasswordRequest
+    );
 
 }

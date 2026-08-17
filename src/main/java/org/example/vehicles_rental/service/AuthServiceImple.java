@@ -2,6 +2,7 @@ package org.example.vehicles_rental.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.example.vehicles_rental.admin.setting.dto.request.ChangePasswordRequest;
 import org.example.vehicles_rental.dto.request.LoginRequest;
 import org.example.vehicles_rental.dto.request.RegisterRequest;
 import org.example.vehicles_rental.dto.request.VerifyOtpRequest;
@@ -120,4 +121,5 @@ public class AuthServiceImple implements AuthService {
                 .message("Email verified successfully")
                 .build();
     }
+
 }

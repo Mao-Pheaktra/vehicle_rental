@@ -1,12 +1,19 @@
 package org.example.vehicles_rental.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.vehicles_rental.admin.setting.dto.request.ChangePasswordRequest;
+import org.example.vehicles_rental.admin.setting.service.NotificationService;
 import org.example.vehicles_rental.dto.request.UserRequest;
 import org.example.vehicles_rental.dto.response.UserResponse;
 import org.example.vehicles_rental.entity.User;
 import org.example.vehicles_rental.enums.Role;
+import org.example.vehicles_rental.exception.EmailAndPasswordNotMatch;
+import org.example.vehicles_rental.exception.IncorrectPassword;
 import org.example.vehicles_rental.exception.NotFoundException;
 import org.example.vehicles_rental.repository.UserRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,6 +29,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserServiceImple implements UserService{
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final NotificationService notificationService;
     @Override
     public UserResponse create(UserRequest userRequest , MultipartFile file) throws IOException{
         String fileName = file.getOriginalFilename();
@@ -35,7 +44,7 @@ public class UserServiceImple implements UserService{
         User user = User.builder()
                 .name(userRequest.getName())
                 .email(userRequest.getEmail())
-                .pwd(userRequest.getPwd())
+                .pwd(passwordEncoder.encode(userRequest.getPwd()))
                 .gender(userRequest.getGender())
                 .tell(userRequest.getTell())
                 .role(Role.CLIENT)
@@ -43,6 +52,7 @@ public class UserServiceImple implements UserService{
                 .profileImage(imageUrl)
                 .build();
         user=userRepository.save(user);
+        notificationService.notifyNewUserRegistration(user);
         return UserResponse.builder()
                 .id(user.getId())
                 .name(user.getName())
@@ -123,7 +133,7 @@ public class UserServiceImple implements UserService{
             user.setEmail(userRequest.getEmail());
         }
         if (userRequest.getPwd() != null) {
-            user.setPwd(userRequest.getPwd());
+            user.setPwd(passwordEncoder.encode(userRequest.getPwd()));
         }
         if (userRequest.getGender() != null) {
             user.setGender(userRequest.getGender());
@@ -146,6 +156,47 @@ public class UserServiceImple implements UserService{
                 .profileImage(user.getProfileImage())
                 .build();
         return userResponse;
+    }
+    @Override
+    public void changePassword(
+            ChangePasswordRequest changePasswordRequest) {
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new NotFoundException("User not found")
+                );
+
+        if (!passwordEncoder.matches(
+                changePasswordRequest.getCurrentPassword(),
+                user.getPwd())) {
+
+            throw new IncorrectPassword(
+                    "Current password is incorrect"
+            );
+        }
+
+        if (!changePasswordRequest.getNewPassword().equals(
+                changePasswordRequest.getConfirmPassword())) {
+
+            throw new EmailAndPasswordNotMatch(
+                    "Passwords do not match"
+            );
+        }
+
+        user.setPwd(
+                passwordEncoder.encode(
+                        changePasswordRequest.getNewPassword()
+                )
+        );
+
+        userRepository.save(user);
     }
 
 }

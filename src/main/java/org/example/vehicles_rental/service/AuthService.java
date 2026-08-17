@@ -1,5 +1,6 @@
 package org.example.vehicles_rental.service;
 
+
 import org.example.vehicles_rental.dto.request.LoginRequest;
 import org.example.vehicles_rental.dto.request.RegisterRequest;
 import org.example.vehicles_rental.dto.request.VerifyOtpRequest;
@@ -13,4 +14,5 @@ public interface AuthService {
     LoginResponse login(LoginRequest loginRequest);
 
     VerifyOtpResponse verifyOtp(VerifyOtpRequest verifyOtpRequest);
+
 }

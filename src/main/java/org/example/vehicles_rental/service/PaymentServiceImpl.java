@@ -1,6 +1,7 @@
 package org.example.vehicles_rental.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.vehicles_rental.admin.setting.service.NotificationService;
 import org.example.vehicles_rental.dto.request.PaymentRequest;
 import org.example.vehicles_rental.dto.response.PaymentResponse;
 import org.example.vehicles_rental.entity.Booking;
@@ -27,6 +28,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
     private final PaymentMethodRepository paymentMethodRepository;
+    private final NotificationService  notificationService;
     @Override
     public PaymentResponse create(PaymentRequest request) {
         Booking booking = bookingRepository.findById(request.getBookingId())
@@ -47,6 +49,7 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setPaymentStatus(PaymentStatus.PENDING);
         payment.setPaymentDate(LocalDate.now());
         Payment saved = paymentRepository.save(payment);
+        notificationService.notifyPaymentReceived(saved);
         return mapToResponse(saved);
     }
     @Override

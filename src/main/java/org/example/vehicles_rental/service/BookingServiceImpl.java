@@ -1,6 +1,7 @@
 package org.example.vehicles_rental.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.vehicles_rental.admin.setting.service.NotificationService;
 import org.example.vehicles_rental.dto.request.BookingRequest;
 import org.example.vehicles_rental.dto.response.BookingResponse;
 import org.example.vehicles_rental.entity.Booking;
@@ -27,6 +28,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
+    private final NotificationService notificationService;
 
     @Override
     public BookingResponse create(BookingRequest request) {
@@ -37,11 +39,15 @@ public class BookingServiceImpl implements BookingService {
        if (!request.getPickupDate().isBefore(request.getReturnDate())){
            throw new InvalidBooking("Return date must be after pickup date");
        }
-       boolean alreadyBooked = bookingRepository.existsByVehicleIdAndPickupDateLessThanAndReturnDateGreaterThan(
-               request.getVehicleId(),
-               request.getReturnDate(),
-               request.getPickupDate()
-       );
+        boolean alreadyBooked = bookingRepository.existsOverlappingBooking(
+                request.getVehicleId(),
+                request.getPickupDate(),
+                request.getReturnDate(),
+                List.of(
+                        BookingStatus.PENDING,
+                        BookingStatus.CONFIRMED
+                )
+        );
        if (alreadyBooked){
            throw new InvalidBooking("Vehicle is already booked for these dates");
        }
@@ -61,6 +67,8 @@ public class BookingServiceImpl implements BookingService {
         booking.setTotalPrice(totalPrice);
         booking.setStatus(BookingStatus.PENDING);
         Booking saved = bookingRepository.save(booking);
+        notificationService.notifyNewBooking(saved);
+
         return mapToResponse(saved);
     }
     @Override
@@ -107,13 +115,16 @@ public class BookingServiceImpl implements BookingService {
         }
         // Check vehicle availability
         boolean alreadyBooked =
-                bookingRepository
-                        .existsByVehicleIdAndIdNotAndPickupDateLessThanAndReturnDateGreaterThan(
-                                booking.getVehicle().getId(),
-                                booking.getId(),
-                                booking.getReturnDate(),
-                                booking.getPickupDate()
-                        );
+                bookingRepository.existsOverlappingBookingForUpdate(
+                        booking.getVehicle().getId(),
+                        booking.getId(),
+                        booking.getPickupDate(),
+                        booking.getReturnDate(),
+                        List.of(
+                                BookingStatus.PENDING,
+                                BookingStatus.CONFIRMED
+                        )
+                );
 
         if (alreadyBooked) {
             throw new InvalidBooking(
@@ -130,10 +141,18 @@ public class BookingServiceImpl implements BookingService {
                         .getPricePerDay()
                         .multiply(BigDecimal.valueOf(totalDays));
         booking.setTotalPrice(totalPrice);
+        BookingStatus oldStatus = booking.getStatus();
+
         if (request.getStatus() != null) {
             booking.setStatus(request.getStatus());
         }
         Booking updated = bookingRepository.save(booking);
+        if (oldStatus != BookingStatus.CANCELLED
+                && updated.getStatus() == BookingStatus.CANCELLED) {
+
+            notificationService.notifyBookingCancellation(updated);
+        }
+
         return mapToResponse(updated);
     }
     @Override

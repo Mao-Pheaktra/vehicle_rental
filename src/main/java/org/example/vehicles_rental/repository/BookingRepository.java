@@ -12,82 +12,122 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
-    List<Booking> findByUserId(Long userId);
-    List<Booking> findByVehicleId(Long vehicleId);
-    List<Booking> findByStatus(String status);
-    boolean existsByVehicleIdAndPickupDateLessThanAndReturnDateGreaterThan(
-            Long vehicleId,
-            LocalDate returnDate,
-            LocalDate pickupDate
+
+//    List<Booking> findByUserId(Long userId);
+//
+//    List<Booking> findByVehicleId(Long vehicleId);
+//
+//    List<Booking> findByStatus(String status);
+
+
+    // CREATE BOOKING
+    @Query("""
+        SELECT COUNT(b) > 0
+        FROM Booking b
+        WHERE b.vehicle.id = :vehicleId
+          AND b.pickupDate < :returnDate
+          AND b.returnDate > :pickupDate
+          AND b.status IN :blockingStatuses
+    """)
+    boolean existsOverlappingBooking(
+            @Param("vehicleId") Long vehicleId,
+            @Param("pickupDate") LocalDate pickupDate,
+            @Param("returnDate") LocalDate returnDate,
+            @Param("blockingStatuses") List<BookingStatus> blockingStatuses
     );
-    boolean existsByVehicleIdAndIdNotAndPickupDateLessThanAndReturnDateGreaterThan(
-            Long vehicleId,
-            Long bookingId,
-            LocalDate returnDate,
-            LocalDate pickupDate
+
+
+    // UPDATE BOOKING
+    @Query("""
+        SELECT COUNT(b) > 0
+        FROM Booking b
+        WHERE b.vehicle.id = :vehicleId
+          AND b.id <> :bookingId
+          AND b.pickupDate < :returnDate
+          AND b.returnDate > :pickupDate
+          AND b.status IN :blockingStatuses
+    """)
+    boolean existsOverlappingBookingForUpdate(
+            @Param("vehicleId") Long vehicleId,
+            @Param("bookingId") Long bookingId,
+            @Param("pickupDate") LocalDate pickupDate,
+            @Param("returnDate") LocalDate returnDate,
+            @Param("blockingStatuses") List<BookingStatus> blockingStatuses
     );
+
+
     long countByStatus(BookingStatus status);
 
+
     @Query("""
-            SELECT COALESCE(SUM(b.totalPrice), 0)
-            FROM Booking b
-            WHERE b.status = :status
-            """)
+        SELECT COALESCE(SUM(b.totalPrice), 0)
+        FROM Booking b
+        WHERE b.status = :status
+    """)
     BigDecimal sumRevenueByStatus(
             @Param("status") BookingStatus status
     );
 
+
     @Query("""
-            SELECT COALESCE(SUM(b.totalDays), 0)
-            FROM Booking b
-            WHERE b.status = :status
-            """)
+        SELECT COALESCE(SUM(b.totalDays), 0)
+        FROM Booking b
+        WHERE b.status = :status
+    """)
     long sumTotalDaysByStatus(
             @Param("status") BookingStatus status
     );
-    //For report and analyst
+
+
+    // For report and analyst
     @Query("""
-    SELECT COALESCE(SUM(b.totalPrice), 0)
-    FROM Booking b
-    WHERE b.createdAt >= :startDate
-    AND b.createdAt < :endDate
-    AND b.status = :status
+        SELECT COALESCE(SUM(b.totalPrice), 0)
+        FROM Booking b
+        WHERE b.createdAt >= :startDate
+          AND b.createdAt < :endDate
+          AND b.status = :status
     """)
     BigDecimal sumRevenueBetween(
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
             @Param("status") BookingStatus status
     );
+
+
     @Query("""
-    SELECT COUNT(b)
-    FROM Booking b
-    WHERE b.createdAt >= :startDate
-    AND b.createdAt < :endDate
+        SELECT COUNT(b)
+        FROM Booking b
+        WHERE b.createdAt >= :startDate
+          AND b.createdAt < :endDate
     """)
     long countBookingsBetween(
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
-//    For monthly bookings:
-            @Query("""
-            SELECT COUNT(b)
-            FROM Booking b
-            WHERE b.createdAt >= :startDate
-            AND b.createdAt < :endDate
-            """)
-        long countBookingsForMonth(
-                @Param("startDate") LocalDateTime startDate,
-                @Param("endDate") LocalDateTime endDate
-        );
-    //    monthly revenue:
-        @Query("""
-            SELECT COALESCE(SUM(b.totalPrice), 0)
-            FROM Booking b
-            WHERE b.createdAt >= :startDate
-            AND b.createdAt < :endDate
-            AND b.status = :status
-            """)
-        BigDecimal sumRevenueForMonth(
+
+
+    // Monthly bookings
+    @Query("""
+        SELECT COUNT(b)
+        FROM Booking b
+        WHERE b.createdAt >= :startDate
+          AND b.createdAt < :endDate
+    """)
+    long countBookingsForMonth(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
+
+    // Monthly revenue
+    @Query("""
+        SELECT COALESCE(SUM(b.totalPrice), 0)
+        FROM Booking b
+        WHERE b.createdAt >= :startDate
+          AND b.createdAt < :endDate
+          AND b.status = :status
+    """)
+    BigDecimal sumRevenueForMonth(
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
             @Param("status") BookingStatus status
