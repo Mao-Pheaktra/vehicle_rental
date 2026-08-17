@@ -60,5 +60,23 @@ public class GlobalException{
                 .status(HttpStatus.TOO_MANY_REQUESTS)
                 .body(e.getMessage());
     }
+    @ExceptionHandler(BookingNotFound.class)
+    public ResponseEntity<?> handleBookingNotFound(BookingNotFound e) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(e.getMessage());
+    }
+    @ExceptionHandler(PaymentMethodNotFound.class)
+    public ResponseEntity<?> handlePaymentMethodNotFound(PaymentMethodNotFound e) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(e.getMessage());
+    }
+    @ExceptionHandler(PaymentNotFound.class)
+    public ResponseEntity<?> handlePaymentNotFound(PaymentNotFound e) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(e.getMessage());
+    }
 
 }

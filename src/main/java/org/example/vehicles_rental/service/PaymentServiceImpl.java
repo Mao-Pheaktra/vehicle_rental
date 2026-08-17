@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -40,9 +41,13 @@ public class PaymentServiceImpl implements PaymentService {
                     "Payment method is currently inactive"
             );
         }
+
+        String transactionId = "TNN-" + UUID.randomUUID().toString();
+
         Payment payment = new Payment();
         payment.setBooking(booking);
         payment.setPaymentMethod(paymentMethod);
+        payment.setTransactionId(transactionId);
         payment.setAmount(booking.getTotalPrice());
         payment.setPaymentStatus(PaymentStatus.PENDING);
         payment.setPaymentDate(LocalDate.now());
@@ -86,8 +91,9 @@ public class PaymentServiceImpl implements PaymentService {
                                     request.getPaymentMethodId()));
             payment.setPaymentMethod(paymentMethod);
         }
-
-
+        if (payment.getTransactionId() == null) {
+            payment.setTransactionId("TXN-" + UUID.randomUUID());
+        }
         Payment updated = paymentRepository.save(payment);
         return mapToResponse(updated);
     }
