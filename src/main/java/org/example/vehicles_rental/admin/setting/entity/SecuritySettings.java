@@ -15,4 +15,5 @@ public class SecuritySettings {
     private boolean twoFactorAuthentication;
 
     private Integer sessionTimeoutMinutes;
+    private boolean autoApprovePasswordChange;
 }

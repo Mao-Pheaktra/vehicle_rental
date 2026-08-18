@@ -96,7 +96,9 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/api/admin/setting/customizer").hasRole("ADMIN")
                                 .requestMatchers(HttpMethod.PUT, "/api/admin/setting/customizer").hasRole("ADMIN")
 
+                                .requestMatchers(HttpMethod.POST, "/api/request_pwd/change").authenticated()
 
+                                .requestMatchers("/api/admin/request/**").hasRole("ADMIN")
                                 .requestMatchers("/error/**").permitAll()
                                 .anyRequest().authenticated()
                 )

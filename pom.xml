@@ -17,11 +17,7 @@
     <version>0.0.1-SNAPSHOT</version>
 
     <name>vehicles_rental</name>
-<<<<<<< Updated upstream
     <description>Vehicle Rental System</description>
-=======
-    <description>vehicles_rental</description>
->>>>>>> Stashed changes
 
     <properties>
         <java.version>21</java.version>
@@ -29,163 +25,126 @@
 
     <dependencies>
 
-<<<<<<< Updated upstream
-        <!-- JPA -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-
-        <!-- Security -->
-=======
+        <!-- ==================== -->
         <!-- Spring Web -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <!-- Spring Data JPA -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-
-        <!-- Spring Security -->
->>>>>>> Stashed changes
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
-
-<<<<<<< Updated upstream
-        <!-- Web -->
+        <!-- ==================== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
 
-=======
->>>>>>> Stashed changes
+        <!-- ==================== -->
+        <!-- Spring Data JPA -->
+        <!-- ==================== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- ==================== -->
+        <!-- Spring Security -->
+        <!-- ==================== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- ==================== -->
+        <!-- Validation -->
+        <!-- @Valid, @NotBlank, @Size -->
+        <!-- ==================== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- ==================== -->
         <!-- PostgreSQL -->
+        <!-- ==================== -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
 
+        <!-- ==================== -->
         <!-- Lombok -->
+        <!-- ==================== -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
 
+        <!-- ==================== -->
         <!-- Mail -->
+        <!-- ==================== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
-<<<<<<< Updated upstream
-        <!-- JWT -->
-=======
+        <!-- ==================== -->
         <!-- Flyway -->
+        <!-- ==================== -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
 
+        <!-- ==================== -->
         <!-- JWT API -->
->>>>>>> Stashed changes
+        <!-- ==================== -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
-            <version>0.12.6</version>
+            <version>0.12.7</version>
         </dependency>
 
-<<<<<<< Updated upstream
-=======
+        <!-- ==================== -->
         <!-- JWT Implementation -->
->>>>>>> Stashed changes
+        <!-- ==================== -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
-            <version>0.12.6</version>
+            <version>0.12.7</version>
             <scope>runtime</scope>
         </dependency>
 
-<<<<<<< Updated upstream
-=======
+        <!-- ==================== -->
         <!-- JWT Jackson -->
->>>>>>> Stashed changes
+        <!-- ==================== -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
-            <version>0.12.6</version>
+            <version>0.12.7</version>
             <scope>runtime</scope>
         </dependency>
 
-<<<<<<< Updated upstream
-        <!-- Flyway -->
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-database-postgresql</artifactId>
-        </dependency>
-
-        <!-- Test -->
-=======
+        <!-- ==================== -->
         <!-- Testing -->
->>>>>>> Stashed changes
+        <!-- ==================== -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
 
-<<<<<<< Updated upstream
-=======
+        <!-- ==================== -->
         <!-- Spring Security Test -->
->>>>>>> Stashed changes
+        <!-- ==================== -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
-<<<<<<< Updated upstream
 
-=======
-        <!-- JWT API -->
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-api</artifactId>
-            <version>0.12.7</version>
-        </dependency>
-
-        <!-- JWT Implementation -->
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-impl</artifactId>
-            <version>0.12.7</version>
-            <scope>runtime</scope>
-        </dependency>
-
-        <!-- JSON Serializer -->
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-jackson</artifactId>
-            <version>0.12.7</version>
-            <scope>runtime</scope>
-        </dependency>
->>>>>>> Stashed changes
     </dependencies>
 
     <build>
         <plugins>
 
-<<<<<<< Updated upstream
-=======
-            <!-- Spring Boot -->
->>>>>>> Stashed changes
+            <!-- Spring Boot Maven Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
