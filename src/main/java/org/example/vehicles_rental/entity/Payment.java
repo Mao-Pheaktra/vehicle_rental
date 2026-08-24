@@ -34,7 +34,13 @@ public class Payment {
 
     @Column(name = "transaction_id")
     private String transactionId;
+    private String bakongAccount;
+    private String currency;
 
+    @Column(length = 1000)
+    private String qr;
+
+    private String md5;
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status")
     private PaymentStatus paymentStatus;

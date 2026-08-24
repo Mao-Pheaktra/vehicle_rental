@@ -1,9 +1,11 @@
 package org.example.vehicles_rental.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.vehicles_rental.dto.request.CreatePaymentRequest;
 import org.example.vehicles_rental.dto.request.PaymentRequest;
 import org.example.vehicles_rental.dto.response.ApiResponse;
 import org.example.vehicles_rental.dto.response.PaymentResponse;
+import org.example.vehicles_rental.service.BakongPaymentService;
 import org.example.vehicles_rental.service.PaymentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PaymentController {
     private final PaymentService paymentService;
+    private final BakongPaymentService bakongPaymentService;
     @PostMapping
     public ResponseEntity<ApiResponse<PaymentResponse>> create(
             @RequestBody PaymentRequest request) {
@@ -53,5 +56,19 @@ public class PaymentController {
         paymentService.delete(id);
         return ResponseEntity.ok(
                 new ApiResponse<>("Payment deleted successfully",200, null));
+    }
+    @PostMapping("/bakong/create")
+    public ResponseEntity<?> createPayment(
+            @RequestBody CreatePaymentRequest request) {
+
+        return ResponseEntity.ok(
+                bakongPaymentService.createPayment(request));
+    }
+
+    @GetMapping("/bakong/{paymentId}/status")
+    public ResponseEntity<ApiResponse<PaymentResponse>> checkPayment(@PathVariable Long paymentId) {
+        return ResponseEntity.ok(
+                new ApiResponse<>("Payment status checked", 200,
+                        bakongPaymentService.checkPayment(paymentId)));
     }
 }
