@@ -1,9 +1,14 @@
 package org.example.vehicles_rental.service;
 
+import kh.gov.nbc.bakong_khqr.BakongKHQR;
+import kh.gov.nbc.bakong_khqr.model.IndividualInfo;
+import kh.gov.nbc.bakong_khqr.model.KHQRData;
+import kh.gov.nbc.bakong_khqr.model.KHQRResponse;
+import kh.gov.nbc.bakong_khqr.model.KHQRCurrency;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.vehicles_rental.dto.request.CreatePaymentRequest;
-import org.example.vehicles_rental.dto.response.PaymentResponse;
+import org.example.vehicles_rental.dto.response.BakongPaymentResponse;
 import org.example.vehicles_rental.entity.Booking;
 import org.example.vehicles_rental.entity.Payment;
 import org.example.vehicles_rental.entity.PaymentMethod;
@@ -11,16 +16,18 @@ import org.example.vehicles_rental.enums.PaymentStatus;
 import org.example.vehicles_rental.repository.BookingRepository;
 import org.example.vehicles_rental.repository.PaymentMethodRepository;
 import org.example.vehicles_rental.repository.PaymentRepository;
-import org.example.vehicles_rental.util.KhqrBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.security.MessageDigest;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Slf4j
@@ -39,117 +46,331 @@ public class BakongPaymentService {
     @Value("${bakong.api.token}")
     private String token;
 
+    @Value("${bakong.merchant.account}")
+    private String merchantAccount;
+
     @Value("${bakong.merchant.name}")
     private String merchantName;
 
     @Value("${bakong.merchant.city}")
     private String merchantCity;
 
-    public PaymentResponse createPayment(CreatePaymentRequest request) {
+    @Value("${bakong.merchant.acquiring-bank}")
+    private String acquiringBank;
+
+    public BakongPaymentResponse createPayment(CreatePaymentRequest request) {
+
+        if (request == null) {
+            throw new IllegalArgumentException("Payment request is required");
+        }
+
+        if (request.getBookingId() == null) {
+            throw new IllegalArgumentException("Booking ID is required");
+        }
+
+        if (request.getPaymentMethodId() == null) {
+            throw new IllegalArgumentException("Payment method ID is required");
+        }
+
+        if (request.getAmount() == null) {
+            throw new IllegalArgumentException("Payment amount is required");
+        }
+
+        if (request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException(
+                    "Payment amount must be greater than 0"
+            );
+        }
+
+        if (request.getCurrency() == null ||
+                request.getCurrency().isBlank()) {
+            throw new IllegalArgumentException("Currency is required");
+        }
+
+        String currency = request.getCurrency()
+                .trim()
+                .toUpperCase();
+
+        if (!currency.equals("USD") && !currency.equals("KHR")) {
+            throw new IllegalArgumentException(
+                    "Currency must be USD or KHR"
+            );
+        }
 
         Booking booking = bookingRepository.findById(request.getBookingId())
-                .orElseThrow(() -> new RuntimeException("Booking not found: " + request.getBookingId()));
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Booking not found: " + request.getBookingId()
+                        )
+                );
 
-        PaymentMethod paymentMethod = paymentMethodRepository.findById(request.getPaymentMethodId())
-                .orElseThrow(() -> new RuntimeException("Payment method not found: " + request.getPaymentMethodId()));
+        PaymentMethod paymentMethod =
+                paymentMethodRepository.findById(request.getPaymentMethodId())
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Payment method not found: " +
+                                                request.getPaymentMethodId()
+                                )
+                        );
 
-        // 1. Build KHQR string locally
+        if (paymentRepository.existsByBookingId(request.getBookingId())) {
+            throw new RuntimeException(
+                    "Payment already exists for booking: " +
+                            request.getBookingId()
+            );
+        }
+
         String billNumber = "BOOK-" + booking.getId();
-        String khqrString = KhqrBuilder.build(
-                request.getBakongAccount(),
-                merchantName,
-                merchantCity,
-                request.getAmount(),
-                request.getCurrency(),
-                billNumber,
-                null,
-                null,
-                true // dynamic QR (has fixed amount)
-        );
 
-        // 2. MD5 hash of the QR string (used later to check status)
-        String md5 = md5Hex(khqrString);
+        IndividualInfo info = new IndividualInfo();
 
-        // 3. Save
+        info.setBakongAccountId(merchantAccount);
+        info.setMerchantName(merchantName);
+        info.setMerchantCity(merchantCity);
+        info.setAcquiringBank(acquiringBank);
+        info.setAmount(request.getAmount().doubleValue());
+        info.setBillNumber(billNumber);
+
+        if (currency.equals("USD")) {
+            info.setCurrency(KHQRCurrency.USD);
+        } else {
+            info.setCurrency(KHQRCurrency.KHR);
+        }
+
+        KHQRResponse<KHQRData> response =
+                BakongKHQR.generateIndividual(info);
+
+        if (response == null) {
+            throw new RuntimeException("KHQR generation failed");
+        }
+
+        if (response.getKHQRStatus() == null) {
+            throw new RuntimeException("KHQR status is null");
+        }
+
+        if (response.getKHQRStatus().getCode() != 0) {
+            throw new RuntimeException(
+                    "KHQR generation failed: " +
+                            response.getKHQRStatus().getMessage()
+            );
+        }
+
+        if (response.getData() == null) {
+            throw new RuntimeException("KHQR data is null");
+        }
+
+        String qr = response.getData().getQr();
+        String md5 = response.getData().getMd5();
+
+        if (qr == null || qr.isBlank()) {
+            throw new RuntimeException("Generated KHQR is empty");
+        }
+
+        if (md5 == null || md5.isBlank()) {
+            throw new RuntimeException("Generated KHQR MD5 is empty");
+        }
+
         Payment payment = Payment.builder()
                 .booking(booking)
                 .paymentMethod(paymentMethod)
                 .amount(request.getAmount())
-                .bakongAccount(request.getBakongAccount())
-                .currency(request.getCurrency())
-                .qr(khqrString)
+                .bakongAccount(merchantAccount)
+                .currency(currency)
+                .qr(qr)
                 .md5(md5)
                 .transactionId(billNumber)
                 .paymentStatus(PaymentStatus.PENDING)
+                .expiresAt(LocalDateTime.now().plusMinutes(10))
                 .build();
 
-        return toResponse(paymentRepository.save(payment));
+        Payment savedPayment = paymentRepository.save(payment);
+
+        log.info(
+                "Bakong payment created: paymentId={}, bookingId={}, md5={}",
+                savedPayment.getId(),
+                booking.getId(),
+                md5
+        );
+
+        return toResponse(savedPayment);
     }
 
-    public PaymentResponse checkPayment(Long paymentId) {
+    public BakongPaymentResponse checkPayment(Long paymentId) {
 
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found: " + paymentId));
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Payment not found: " + paymentId
+                        )
+                );
 
-        if (payment.getPaymentStatus() == PaymentStatus.PENDING && payment.getMd5() != null) {
-            if (isPaidOnBakong(payment.getMd5())) {
-                payment.setPaymentStatus(PaymentStatus.PAID);
-                payment = paymentRepository.save(payment);
-            }
+        if (payment.getPaymentStatus() == PaymentStatus.PAID) {
+            return toResponse(payment);
+        }
+
+        if (payment.getExpiresAt() != null &&
+                LocalDateTime.now().isAfter(payment.getExpiresAt())) {
+
+            payment.setPaymentStatus(PaymentStatus.EXPIRED);
+            paymentRepository.save(payment);
+
+            return toResponse(payment);
+        }
+
+        if (payment.getMd5() == null ||
+                payment.getMd5().isBlank()) {
+            return toResponse(payment);
+        }
+
+        Map<String, Object> result =
+                checkTransactionByMd5(payment.getMd5());
+
+        if (result == null) {
+            return toResponse(payment);
+        }
+
+        Object responseCode = result.get("responseCode");
+
+        if (responseCode == null ||
+                !"0".equals(responseCode.toString())) {
+            return toResponse(payment);
+        }
+
+        Object dataObject = result.get("data");
+
+        if (!(dataObject instanceof Map<?, ?> data)) {
+            return toResponse(payment);
+        }
+
+        String transactionHash = getString(data, "hash");
+        String toAccount = getString(data, "toAccountId");
+        String transactionCurrency = getString(data, "currency");
+        BigDecimal transactionAmount = getBigDecimal(data, "amount");
+
+        boolean amountMatches =
+                transactionAmount != null &&
+                        payment.getAmount()
+                                .compareTo(transactionAmount) == 0;
+
+        boolean currencyMatches =
+                transactionCurrency != null &&
+                        payment.getCurrency() != null &&
+                        payment.getCurrency()
+                                .equalsIgnoreCase(transactionCurrency);
+
+        boolean destinationMatches =
+                toAccount != null &&
+                        merchantAccount != null &&
+                        merchantAccount
+                                .equalsIgnoreCase(toAccount);
+
+        log.info(
+                "Bakong verification: paymentId={}, amountMatches={}, " +
+                        "currencyMatches={}, destinationMatches={}",
+                paymentId,
+                amountMatches,
+                currencyMatches,
+                destinationMatches
+        );
+
+        if (amountMatches &&
+                currencyMatches &&
+                destinationMatches) {
+
+            payment.setPaymentStatus(PaymentStatus.PAID);
+            payment.setPaymentDate(LocalDate.now());
+            payment.setPaidAt(LocalDateTime.now());
+            payment.setBakongTransactionHash(transactionHash);
+
+            paymentRepository.save(payment);
+
+            log.info(
+                    "Payment verified successfully: paymentId={}",
+                    paymentId
+            );
         }
 
         return toResponse(payment);
     }
 
-    // ---- Bakong Open API: verify transaction ----
-    private boolean isPaidOnBakong(String md5) {
+    private Map<String, Object> checkTransactionByMd5(String md5) {
+
         try {
             HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(token);
-            headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
 
-            Map<String, Object> body = Map.of("md5", md5);
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+            headers.setBearerAuth(token);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            Map<String, String> body = Map.of(
+                    "md5",
+                    md5
+            );
+
+            HttpEntity<Map<String, String>> entity =
+                    new HttpEntity<>(body, headers);
 
             ResponseEntity<Map> response = restTemplate.exchange(
-                    baseUrl + "/check_transaction_by_md5",
-                    HttpMethod.POST, entity, Map.class);
+                    baseUrl + "/v1/check_transaction_by_md5",
+                    HttpMethod.POST,
+                    entity,
+                    Map.class
+            );
 
-            Map bodyResp = response.getBody();
-            if (bodyResp == null) return false;
+            if (response.getBody() == null) {
+                return null;
+            }
 
-            Object responseCode = bodyResp.get("responseCode");
-            // Bakong: responseCode = 0 means transaction found & successful
-            return responseCode != null && responseCode.toString().equals("0");
+            return response.getBody();
 
         } catch (Exception e) {
-            log.warn("Bakong check_transaction_by_md5 failed: {}", e.getMessage());
-            return false;
+            log.warn(
+                    "Bakong API error: {}",
+                    e.getMessage()
+            );
+
+            return null;
         }
     }
 
-    private String md5Hex(String input) {
+    private String getString(Map<?, ?> map, String key) {
+
+        Object value = map.get(key);
+
+        return value == null
+                ? null
+                : value.toString();
+    }
+
+    private BigDecimal getBigDecimal(
+            Map<?, ?> map,
+            String key
+    ) {
+
+        Object value = map.get(key);
+
+        if (value == null) {
+            return null;
+        }
+
         try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] digest = md.digest(input.getBytes());
-            StringBuilder sb = new StringBuilder();
-            for (byte b : digest) sb.append(String.format("%02x", b));
-            return sb.toString();
-        } catch (Exception e) {
-            throw new RuntimeException("MD5 generation failed", e);
+            return new BigDecimal(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 
-    private PaymentResponse toResponse(Payment payment) {
-        return PaymentResponse.builder()
-                .id(payment.getId())
+    private BakongPaymentResponse toResponse(Payment payment) {
+
+        return BakongPaymentResponse.builder()
+                .paymentId(payment.getId())
                 .bookingId(payment.getBooking().getId())
                 .amount(payment.getAmount())
-                .paymentMethodId(payment.getPaymentMethod().getId())
-                .transactionId(payment.getTransactionId())
                 .currency(payment.getCurrency())
+                .transactionId(payment.getTransactionId())
                 .qr(payment.getQr())
                 .md5(payment.getMd5())
+                .expiresAt(payment.getExpiresAt())
+                .paidAt(payment.getPaidAt())
                 .status(payment.getPaymentStatus())
                 .paymentDate(payment.getPaymentDate())
                 .build();

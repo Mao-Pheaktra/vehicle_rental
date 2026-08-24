@@ -28,19 +28,32 @@ public class Payment {
     @JoinColumn(name = "payment_method_id", nullable = false)
     private PaymentMethod paymentMethod;
 
-
-    @Column(name = "amount", precision = 10, scale = 2)
+    @Column(
+            name = "amount",
+            precision = 10,
+            scale = 2,
+            nullable = false
+    )
     private BigDecimal amount;
 
     @Column(name = "transaction_id")
     private String transactionId;
+
+    @Column(name = "bakong_account")
     private String bakongAccount;
+
+    @Column(name = "currency", length = 3)
     private String currency;
 
-    @Column(length = 1000)
+    @Column(name = "qr", length = 2000)
     private String qr;
 
+    @Column(name = "md5", length = 32)
     private String md5;
+
+    @Column(name = "bakong_transaction_hash")
+    private String bakongTransactionHash;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status")
     private PaymentStatus paymentStatus;
@@ -51,8 +64,15 @@ public class Payment {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
+
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
     @PrePersist
     protected void onCreate() {
+
         this.createdAt = LocalDateTime.now();
 
         if (this.paymentStatus == null) {
@@ -61,5 +81,6 @@ public class Payment {
 
         if (this.paymentDate == null) {
             this.paymentDate = LocalDate.now();
-        }  }
+        }
+    }
 }
