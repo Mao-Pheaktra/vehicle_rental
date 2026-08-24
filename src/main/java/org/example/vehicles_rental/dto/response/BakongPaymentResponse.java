@@ -4,24 +4,26 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.example.vehicles_rental.enums.PaymentMethodName;
 import org.example.vehicles_rental.enums.PaymentStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentResponse {
-    private Long id;
+public class BakongPaymentResponse {
+    private Long paymentId;
     private Long bookingId;
     private BigDecimal amount;
-    private Long paymentMethodId;
-    private PaymentMethodName paymentMethodName;
-    private String transactionId;
     private String currency;
+    private String transactionId;
+    private String qr;
+    private String md5;
+    private LocalDateTime expiresAt;
+    private LocalDateTime paidAt;
     private PaymentStatus status;
     private LocalDate paymentDate;
 }

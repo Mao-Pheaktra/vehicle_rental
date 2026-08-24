@@ -105,9 +105,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .id(payment.getId())
                 .bookingId(payment.getBooking().getId())
                 .paymentMethodId(payment.getPaymentMethod().getId())
-                .paymentMethodName(
-                        payment.getPaymentMethod().getPaymentMethodName()
-                )
+                .paymentMethodName(payment.getPaymentMethod().getPaymentMethodName())
                 .amount(payment.getAmount())
                 .transactionId(payment.getTransactionId())
                 .status(payment.getPaymentStatus())

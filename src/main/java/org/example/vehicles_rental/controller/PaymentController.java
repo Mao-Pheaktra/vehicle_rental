@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.vehicles_rental.dto.request.CreatePaymentRequest;
 import org.example.vehicles_rental.dto.request.PaymentRequest;
 import org.example.vehicles_rental.dto.response.ApiResponse;
+import org.example.vehicles_rental.dto.response.BakongPaymentResponse;
 import org.example.vehicles_rental.dto.response.PaymentResponse;
 import org.example.vehicles_rental.service.BakongPaymentService;
 import org.example.vehicles_rental.service.PaymentService;
@@ -58,17 +59,20 @@ public class PaymentController {
                 new ApiResponse<>("Payment deleted successfully",200, null));
     }
     @PostMapping("/bakong/create")
-    public ResponseEntity<?> createPayment(
+    public ResponseEntity<BakongPaymentResponse> createBakongPayment(
             @RequestBody CreatePaymentRequest request) {
 
         return ResponseEntity.ok(
-                bakongPaymentService.createPayment(request));
+                bakongPaymentService.createPayment(request)
+        );
     }
 
     @GetMapping("/bakong/{paymentId}/status")
-    public ResponseEntity<ApiResponse<PaymentResponse>> checkPayment(@PathVariable Long paymentId) {
+    public ResponseEntity<BakongPaymentResponse> checkBakongPayment(
+            @PathVariable Long paymentId) {
+
         return ResponseEntity.ok(
-                new ApiResponse<>("Payment status checked", 200,
-                        bakongPaymentService.checkPayment(paymentId)));
+                bakongPaymentService.checkPayment(paymentId)
+        );
     }
 }
