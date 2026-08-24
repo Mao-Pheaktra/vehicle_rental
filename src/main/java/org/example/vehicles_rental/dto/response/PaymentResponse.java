@@ -14,13 +14,16 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentResponse {
+public class    PaymentResponse {
     private Long id;
     private Long bookingId;
     private BigDecimal amount;
     private Long paymentMethodId;
     private PaymentMethodName paymentMethodName;
     private String transactionId;
+    private String currency;
+    private String qr;
+    private String md5;
     private PaymentStatus status;
     private LocalDate paymentDate;
 }
