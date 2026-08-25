@@ -138,6 +138,15 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- ==================== -->
+        <!-- Bakong KHQR Java SDK -->
+        <!-- ==================== -->
+        <dependency>
+            <groupId>kh.gov.nbc.bakong_khqr</groupId>
+            <artifactId>sdk-java</artifactId>
+            <version>1.0.0.17</version>
+        </dependency>
+
 
     </dependencies>
 

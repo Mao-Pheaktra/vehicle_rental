@@ -5,6 +5,7 @@ import org.example.vehicles_rental.dto.request.PaymentMethodRequest;
 import org.example.vehicles_rental.dto.response.PaymentMethodResponse;
 import org.example.vehicles_rental.entity.PaymentMethod;
 import org.example.vehicles_rental.enums.PaymentMethodStatus;
+import org.example.vehicles_rental.exception.DuplicatePaymentMethod;
 import org.example.vehicles_rental.exception.PaymentMethodNotFound;
 import org.example.vehicles_rental.repository.PaymentMethodRepository;
 import org.springframework.stereotype.Service;
@@ -14,22 +15,48 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class PaymentMethodServiceImpl implements PaymentMethodService {
+
     private final PaymentMethodRepository paymentMethodRepository;
+
+    // CREATE
     @Override
     public PaymentMethodResponse create(PaymentMethodRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Payment method request is required");
+        }
+
+        if (request.getPaymentMethodName() == null) {
+            throw new IllegalArgumentException("Payment method name is required");
+        }
+
+        if (paymentMethodRepository.existsByPaymentMethodName(
+                request.getPaymentMethodName()
+        )) {
+            throw new DuplicatePaymentMethod(
+                    request.getPaymentMethodName().name()
+            );
+        }
+
         PaymentMethod paymentMethod = new PaymentMethod();
         paymentMethod.setPaymentMethodName(request.getPaymentMethodName());
         paymentMethod.setDescription(request.getDescription());
         paymentMethod.setStatus(PaymentMethodStatus.ACTIVE);
+
         PaymentMethod saved = paymentMethodRepository.save(paymentMethod);
+
         return mapToResponse(saved);
     }
+
+    // GET BY ID
     @Override
     public PaymentMethodResponse getById(Long id) {
         PaymentMethod paymentMethod = paymentMethodRepository.findById(id)
-                .orElseThrow(() -> new PaymentMethodNotFound("Payment method not found"));
+                .orElseThrow(() -> new PaymentMethodNotFound(id));
+
         return mapToResponse(paymentMethod);
     }
+
+    // GET ALL
     @Override
     public List<PaymentMethodResponse> getAll() {
         return paymentMethodRepository.findAll()
@@ -37,24 +64,57 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
                 .map(this::mapToResponse)
                 .toList();
     }
+
+    // UPDATE
     @Override
-    public PaymentMethodResponse update(Long id, PaymentMethodRequest request) {
+    public PaymentMethodResponse update(
+            Long id,
+            PaymentMethodRequest request
+    ) {
         PaymentMethod paymentMethod = paymentMethodRepository.findById(id)
-                .orElseThrow(() -> new PaymentMethodNotFound("Payment method not found"));
+                .orElseThrow(() -> new PaymentMethodNotFound(id));
+
+        if (request == null) {
+            throw new IllegalArgumentException("Payment method request is required");
+        }
+
+        if (request.getPaymentMethodName() == null) {
+            throw new IllegalArgumentException("Payment method name is required");
+        }
+
+        if (paymentMethodRepository.existsByPaymentMethodNameAndIdNot(
+                request.getPaymentMethodName(),
+                id
+        )) {
+            throw new DuplicatePaymentMethod(
+                    request.getPaymentMethodName().name()
+            );
+        }
+
         paymentMethod.setPaymentMethodName(request.getPaymentMethodName());
         paymentMethod.setDescription(request.getDescription());
-        paymentMethod.setStatus(request.getStatus());
+        paymentMethod.setStatus(
+                request.getStatus() == null
+                        ? PaymentMethodStatus.ACTIVE
+                        : request.getStatus()
+        );
+
         PaymentMethod updated = paymentMethodRepository.save(paymentMethod);
+
         return mapToResponse(updated);
     }
+
+    // DELETE
     @Override
     public void delete(Long id) {
         PaymentMethod paymentMethod = paymentMethodRepository.findById(id)
-                .orElseThrow(() -> new PaymentMethodNotFound("Payment method not found"));
+                .orElseThrow(() -> new PaymentMethodNotFound(id));
+
         paymentMethodRepository.delete(paymentMethod);
     }
-    private PaymentMethodResponse mapToResponse(
-            PaymentMethod paymentMethod) {
+
+    // MAPPER
+    private PaymentMethodResponse mapToResponse(PaymentMethod paymentMethod) {
         return new PaymentMethodResponse(
                 paymentMethod.getId(),
                 paymentMethod.getPaymentMethodName(),

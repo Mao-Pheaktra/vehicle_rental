@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class ProfileServie implements UserDetailsService {
+public class ProfileService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override

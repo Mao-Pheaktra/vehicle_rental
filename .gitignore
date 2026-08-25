@@ -9,6 +9,7 @@ target/
 .classpath
 .factorypath
 .project
+git status
 .settings
 .springBeans
 .sts4-cache
@@ -31,3 +32,4 @@ build/
 
 ### VS Code ###
 .vscode/
+node_modules/

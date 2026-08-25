@@ -2,7 +2,6 @@ package org.example.vehicles_rental.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.example.vehicles_rental.admin.setting.dto.request.ChangePasswordRequest;
 import org.example.vehicles_rental.dto.request.LoginRequest;
 import org.example.vehicles_rental.dto.request.RegisterRequest;
 import org.example.vehicles_rental.dto.request.VerifyOtpRequest;
@@ -54,7 +53,7 @@ public class AuthServiceImple implements AuthService {
                         .message("Registration successful. Please verify the OTP sent to your email.")
                         .build();
             }
-            throw new EmaliAlreadyExists("Email already exists");
+            throw new EmailAlreadyExists("Email already exists");
 
         }
         User user = User.builder()
@@ -78,7 +77,7 @@ public class AuthServiceImple implements AuthService {
     @Override
     public LoginResponse login(LoginRequest loginRequest){
         User user = userRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(()-> new EmaliAlreadyExists("Incorrect email or password"));
+                .orElseThrow(()-> new EmailAlreadyExists("Incorrect email or password"));
         if (!passwordEncoder.matches(loginRequest.getPwd(), user.getPwd())){
             throw new EmailAndPasswordNotMatch("Email and password are not match");
         }
