@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import org.example.vehicles_rental.enums.PaymentStatus;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -25,5 +24,5 @@ public class BakongPaymentResponse {
     private LocalDateTime expiresAt;
     private LocalDateTime paidAt;
     private PaymentStatus status;
-    private LocalDate paymentDate;
+    private LocalDateTime paymentDate;
 }

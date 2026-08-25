@@ -1,5 +1,6 @@
 package org.example.vehicles_rental.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.vehicles_rental.dto.request.CreatePaymentRequest;
 import org.example.vehicles_rental.dto.request.PaymentRequest;
@@ -60,7 +61,7 @@ public class PaymentController {
     }
     @PostMapping("/bakong/create")
     public ResponseEntity<BakongPaymentResponse> createBakongPayment(
-            @RequestBody CreatePaymentRequest request) {
+            @Valid @RequestBody CreatePaymentRequest request) {
 
         return ResponseEntity.ok(
                 bakongPaymentService.createPayment(request)
