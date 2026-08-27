@@ -1,4 +1,4 @@
-package org.example.vehicles_rental.service;
+package org.example.vehicles_rental.exception;
 
 public class ResetTokenExpired extends RuntimeException{
     public ResetTokenExpired(String message){
