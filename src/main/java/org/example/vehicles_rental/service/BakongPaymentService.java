@@ -39,7 +39,8 @@ public class BakongPaymentService {
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
     private final PaymentMethodRepository paymentMethodRepository;
-
+//    @Value("${bakong.enabled:false}")
+//    private boolean bakongEnabled;
     @Value("${bakong.api.base-url}")
     private String baseUrl;
 

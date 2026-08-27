@@ -49,6 +49,7 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ApiResponse<String> forgotPassword(@RequestBody ForgotPasswordRequest forgotPasswordRequest){
+        passwordResetService.forgotPassword(forgotPasswordRequest);
         return new ApiResponse<>("Password reset link has beenn sent to your email", 200, null);
     }
 

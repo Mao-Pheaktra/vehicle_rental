@@ -9,6 +9,7 @@ import org.example.vehicles_rental.entity.User;
 import org.example.vehicles_rental.exception.EmailAndPasswordNotMatch;
 import org.example.vehicles_rental.exception.InvalidResetToken;
 import org.example.vehicles_rental.exception.NotFoundException;
+import org.example.vehicles_rental.exception.ResetTokenExpired;
 import org.example.vehicles_rental.repository.PasswordResetTokenRepository;
 import org.example.vehicles_rental.repository.UserRepository;
 import org.springframework.mail.SimpleMailMessage;
