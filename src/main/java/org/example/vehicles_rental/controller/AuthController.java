@@ -3,15 +3,14 @@ package org.example.vehicles_rental.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.example.vehicles_rental.dto.request.LoginRequest;
-import org.example.vehicles_rental.dto.request.RegisterRequest;
-import org.example.vehicles_rental.dto.request.VerifyOtpRequest;
+import org.example.vehicles_rental.dto.request.*;
 import org.example.vehicles_rental.dto.response.ApiResponse;
 import org.example.vehicles_rental.dto.response.LoginResponse;
 import org.example.vehicles_rental.dto.response.RegisterResponse;
 import org.example.vehicles_rental.dto.response.VerifyOtpResponse;
 import org.example.vehicles_rental.exception.TooManyRequestException;
 import org.example.vehicles_rental.service.AuthService;
+import org.example.vehicles_rental.service.PasswordResetService;
 import org.example.vehicles_rental.service.RateLimitService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private final AuthService authService;
     private final RateLimitService rateLimitService;
+    private final PasswordResetService passwordResetService;
     @PostMapping("/register")
     public ApiResponse<RegisterResponse> register(@RequestBody RegisterRequest registerRequest, HttpServletRequest httpServletRequest){
         String ip = httpServletRequest.getRemoteAddr();
@@ -46,4 +46,17 @@ public class AuthController {
     public ApiResponse<VerifyOtpResponse> verifyOtp(@RequestBody VerifyOtpRequest verifyOtpRequest){
         return new ApiResponse<>("OTP verified successfully", 200, authService.verifyOtp(verifyOtpRequest));
     }
+
+    @PostMapping("/forgot-password")
+    public ApiResponse<String> forgotPassword(@RequestBody ForgotPasswordRequest forgotPasswordRequest){
+        return new ApiResponse<>("Password reset link has beenn sent to your email", 200, null);
+    }
+
+    @PostMapping("/reset-password")
+    public ApiResponse<String> resetPassword(@RequestBody ResetPasswordRequest resetPasswordRequest){
+        passwordResetService.resetPassword(resetPasswordRequest);
+
+        return new ApiResponse<>("Password reset successfully", 200, null);
+    }
+
 }
