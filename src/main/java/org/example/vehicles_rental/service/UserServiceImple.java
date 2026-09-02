@@ -1,5 +1,6 @@
 package org.example.vehicles_rental.service;
 
+import com.cloudinary.Cloudinary;
 import lombok.RequiredArgsConstructor;
 import org.example.vehicles_rental.admin.setting.dto.request.ChangePasswordRequest;
 import org.example.vehicles_rental.admin.setting.service.NotificationService;
@@ -31,17 +32,15 @@ public class UserServiceImple implements UserService{
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
+    private CloudinaryService cloudinaryService;
+    private Cloudinary cloudinary;
     @Override
     public UserResponse create(UserRequest userRequest , MultipartFile file) throws IOException{
-        String fileName = file.getOriginalFilename();
-        String fileUrl = UUID.randomUUID().toString()+"_"+fileName;
-        Path path = Paths.get("profileImage");
-        String imageUrl = "http://localhost:8080/profileImage/"+fileUrl;
-        if (!Files.exists(path)){
-            Files.createDirectories(path);
+        String imageUrl = null;
+        if (file !=null && !file.isEmpty()){
+            imageUrl = cloudinaryService.uploadProfileImage(file);
         }
-        Files.copy(file.getInputStream(), path.resolve(fileUrl));
-        User user = User.builder()
+       User user = User.builder()
                 .name(userRequest.getName())
                 .email(userRequest.getEmail())
                 .pwd(passwordEncoder.encode(userRequest.getPwd()))
@@ -119,11 +118,7 @@ public class UserServiceImple implements UserService{
         User user = userRepository.findById(id).orElseThrow(()-> new NotFoundException("User Not Found"));
 
         if (file != null && !file.isEmpty()) {
-            String fileName = file.getOriginalFilename();
-            String fileUrl = UUID.randomUUID().toString() + "_" + fileName;
-            Path path = Paths.get("profileImage");
-            String imageUrl = "http://localhost:8080/profileImage/" + fileUrl;
-            Files.copy(file.getInputStream(), path.resolve(fileUrl));
+            String imageUrl = cloudinaryService.uploadProfileImage(file);
             user.setProfileImage(imageUrl);
         }
         if (userRequest.getName() != null) {
