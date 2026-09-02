@@ -16,4 +16,8 @@ public interface AuthService {
     VerifyOtpResponse verifyOtp(VerifyOtpRequest verifyOtpRequest);
 
     LoginResponse googleLogin(String code);
+<<<<<<< HEAD
+=======
+
+>>>>>>> develop
 }
