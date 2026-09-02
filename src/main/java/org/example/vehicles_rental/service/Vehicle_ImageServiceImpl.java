@@ -1,5 +1,6 @@
 package org.example.vehicles_rental.service;
 
+import com.cloudinary.Cloudinary;
 import lombok.RequiredArgsConstructor;
 import org.example.vehicles_rental.dto.request.Vehicle_imageRequest;
 import org.example.vehicles_rental.dto.response.VehicleResponse;
@@ -29,18 +30,15 @@ public class Vehicle_ImageServiceImpl implements Vehicle_ImageService {
     private final Vehicle_imageRepository vehicle_imageRepository;
     private final Vehicle_ImageMapper  vehicle_ImageMapper;
     private final VehicleRepository  vehicleRepository;
+    private final CloudinaryService cloudinaryService;
+    private final Cloudinary cloudinary;
 
     @Override
     public Vehicle_imageResponse create(Vehicle_imageRequest vehicle_imageRequest, MultipartFile image)throws IOException {
-        String imageName = image.getOriginalFilename();
-        String imageUrl = UUID.randomUUID().toString()+"_"+imageName;
-        Path path = Paths.get("upload");
-        String fileUrl = "http://localhost:8080/upload/"+imageUrl;
-        if(!Files.exists(path)){
-            Files.createDirectories(path);
-        }
-        Files.copy(image.getInputStream(),path.resolve(imageUrl));
-
+       String fileUrl = null;
+       if (image != null && !image.isEmpty()){
+           fileUrl = cloudinaryService.uploadVehicleImage(image);
+       }
         Vehicle vehicle = vehicleRepository
                 .findById(vehicle_imageRequest.getVehicle_id())
                 .orElseThrow(()->new RuntimeException("vehicle id not found."));
@@ -78,10 +76,6 @@ public class Vehicle_ImageServiceImpl implements Vehicle_ImageService {
     public Vehicle_imageResponse update(Long id, Vehicle_imageRequest vehicle_imageRequest, MultipartFile image) throws IOException {
 
         String imageName = image.getOriginalFilename();
-        String imageUrl = UUID.randomUUID().toString()+"_"+imageName;
-        Path path = Paths.get("upload");
-        String fileUrl = "http://localhost:8080/upload/"+imageUrl;
-        Files.copy(image.getInputStream(),path.resolve(imageUrl));
 
         Vehicle vehicle = vehicleRepository
                 .findById(vehicle_imageRequest.getVehicle_id())
@@ -89,7 +83,10 @@ public class Vehicle_ImageServiceImpl implements Vehicle_ImageService {
         Vehicle_Image vehicle_image = vehicle_imageRepository.findById(id)
                 .orElseThrow(()->new NotFoundException("Vehicle_Image Id " +id+ " Not Found"));
         vehicle_image.setVehicle(vehicle);
-        vehicle_image.setImage(fileUrl);
+        if (image !=null && !image.isEmpty()){
+            String fileUrl = cloudinaryService.uploadVehicleImage(image);
+            vehicle_image.setImage(fileUrl);
+        }
         vehicle_imageRepository.save(vehicle_image);
         return vehicle_ImageMapper.toVehicleImageResponse(vehicle_image);
     }

@@ -1,5 +1,6 @@
 package org.example.vehicles_rental.service;
 
+import com.cloudinary.Cloudinary;
 import lombok.RequiredArgsConstructor;
 import org.example.vehicles_rental.dto.request.BrandRequest;
 import org.example.vehicles_rental.dto.response.BrandResponse;
@@ -26,18 +27,17 @@ import java.util.UUID;
 public class BrandServiceImpl implements BrandService {
     private final BrandRepository brandRepository;
     private final BrandMapper brandMapper;
+    private final Cloudinary cloudinary;
+    private final CloudinaryService cloudinaryService;
     @Override
     public BrandResponse create(BrandRequest brandRequest, MultipartFile file) throws IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
-        String fileName = file.getOriginalFilename();
-        String fileUrl = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-        Path path = Paths.get("upload");
-        String imageUrl = "http://localhost:8080/upload/" + fileUrl;
-        if(!Files.exists(path)){
-            Files.createDirectories(path);
+
+        String imageUrl = null;
+        if (file != null && !file.isEmpty()){
+            imageUrl = cloudinaryService.uploadBrandImage(file);
         }
-        Files.copy(file.getInputStream(),path.resolve(fileUrl));
         Brand  brand = Brand.builder()
                 .brand_name(brandRequest.getBrand_name())
                 .logo(imageUrl)
@@ -85,16 +85,14 @@ public class BrandServiceImpl implements BrandService {
     public BrandResponse update(Long id, BrandRequest brandRequest, MultipartFile file) throws IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
-        String fileName = file.getOriginalFilename();
-        String fileUrl = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-        Path path = Paths.get("upload");
-        String imageUrl = "http://localhost:8080/upload/" + fileUrl;
-        Files.copy(file.getInputStream(),path.resolve(fileUrl));
 
-        Brand brand = brandRepository.findById(id)
-                .orElseThrow(()->new NotFoundException("Brand Id " +id+ " Not Found"));
-                brand.setBrand_name(brandRequest.getBrand_name());
-                brand.setLogo(imageUrl);
+        Brand brand = brandRepository.findById(id).orElseThrow(()->new NotFoundException("Brand Id " +id+ " Not Found"));
+
+        brand.setBrand_name(brandRequest.getBrand_name());
+        if (file !=null && !file.isEmpty()){
+            String imageUrl = cloudinaryService.uploadBrandImage(file);
+            brandRequest.setLogo(imageUrl);
+        }
         brand=brandRepository.save(brand);
         return brandMapper.toBrandResponse(brand);
     }
