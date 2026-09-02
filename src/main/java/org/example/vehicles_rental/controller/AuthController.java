@@ -17,6 +17,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/auth")
@@ -24,6 +28,12 @@ public class AuthController {
     private final AuthService authService;
     private final RateLimitService rateLimitService;
     private final PasswordResetService passwordResetService;
+
+    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+    private String clientId;
+
+    @Value("${spring.security.oauth2.client.registration.google.redirect-uri}")
+    private String redirectUri;
     @PostMapping("/register")
     public ApiResponse<RegisterResponse> register(@RequestBody RegisterRequest registerRequest, HttpServletRequest httpServletRequest){
         String ip = httpServletRequest.getRemoteAddr();
@@ -58,6 +68,36 @@ public class AuthController {
         passwordResetService.resetPassword(resetPasswordRequest);
 
         return new ApiResponse<>("Password reset successfully", 200, null);
+    }
+
+    @GetMapping("/google")
+    public ApiResponse<String> googleLogin() {
+
+        String googleUrl =
+                "https://accounts.google.com/o/oauth2/v2/auth" +
+                        "?client_id=" + clientId +
+                        "&redirect_uri=" + redirectUri +
+                        "&response_type=code" +
+                        "&scope=openid%20profile%20email" +
+                        "&access_type=offline";
+
+        return new ApiResponse<>(
+                "Google login URL generated successfully",
+                200,
+                googleUrl
+        );
+    }
+
+    @GetMapping("/google/callback")
+    public ApiResponse<LoginResponse> googleCallback(
+            @RequestParam("code") String code
+    ) {
+
+        return new ApiResponse<>(
+                "Google login successfully",
+                200,
+                authService.googleLogin(code)
+        );
     }
 
 }
