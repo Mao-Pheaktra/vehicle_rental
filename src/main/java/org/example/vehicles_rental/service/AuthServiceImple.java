@@ -15,11 +15,25 @@ import org.example.vehicles_rental.exception.*;
 import org.example.vehicles_rental.repository.OtpRepository;
 import org.example.vehicles_rental.repository.UserRepository;
 import org.example.vehicles_rental.security.JwtService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +44,13 @@ public class AuthServiceImple implements AuthService {
     private final OtpService otpService;
     private final OtpRepository otpRepository;
 
+    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+    private String googleClientId;
+
+    @Value("${spring.security.oauth2.client.registration.google.client-secret}")
+    private String googleClientSecret;
+
+    private final RestTemplate restTemplate = new RestTemplate();
     @Override
     public RegisterResponse register(RegisterRequest registerRequest){
 
@@ -121,4 +142,98 @@ public class AuthServiceImple implements AuthService {
                 .build();
     }
 
+    @Override
+    @Transactional
+    public LoginResponse googleLogin(String code){
+
+        // 1. Exchange authorization code for Google access token
+        String tokenUrl = "https://oauth2.googleapis.com/token";
+
+        HttpHeaders tokenHeaders = new HttpHeaders();
+        tokenHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String > tokenRequest = new LinkedMultiValueMap<>();
+
+        tokenRequest.add("code", code);
+        tokenRequest.add("client_id", googleClientId);
+        tokenRequest.add("client_secret", googleClientSecret);
+        tokenRequest.add("redirect_uri", "http://localhost:8080/api/auth/google/callback");
+        tokenRequest.add("grant_type", "authorization_code");
+
+        HttpEntity<MultiValueMap<String , String >> tokenEntity = new HttpEntity<>(tokenRequest, tokenHeaders);
+
+        ResponseEntity<Map> tokenResponse = restTemplate.exchange(
+                tokenUrl,
+                HttpMethod.POST,
+                tokenEntity,
+                Map.class);
+        if (!tokenResponse.getStatusCode().is2xxSuccessful() || tokenResponse.getBody() == null){
+            throw new FailToGetGgToken("Fail to get Google access token");
+        }
+
+        String accessToken = (String) tokenResponse.getBody().get("access_token");
+        // 2. Get Google user information
+        String userInfoUrl = "https://www.googleapis.com/oauth2/v3/userinfo";
+
+        HttpHeaders userInfoHeaders = new HttpHeaders();
+        userInfoHeaders.setBearerAuth(accessToken);
+
+        HttpEntity<Void> userInfoEntity = new HttpEntity<>(userInfoHeaders);
+
+        ResponseEntity<Map> userInfoResponse = restTemplate.exchange(
+                userInfoUrl,
+                HttpMethod.GET,
+                userInfoEntity,
+                Map.class
+        );
+
+        if (!userInfoResponse.getStatusCode().is2xxSuccessful()
+                || userInfoResponse.getBody() == null) {
+            throw new RuntimeException("Failed to get Google user information");
+        }
+
+        Map<String, Object> googleUser = userInfoResponse.getBody();
+
+        String email = (String) googleUser.get("email");
+        String name = (String) googleUser.get("name");
+        String picture = (String) googleUser.get("picture");
+
+        if (email == null || email.isBlank()) {
+            throw new RuntimeException("Google account email not found");
+        }
+
+        // 3. Find existing user or create a new one
+        User user = userRepository.findByEmail(email)
+                .orElseGet(() -> {
+
+                    User newUser = User.builder()
+                            .name(name != null ? name : email)
+                            .email(email)
+                            .pwd(passwordEncoder.encode(UUID.randomUUID().toString()))
+                            .role(Role.CLIENT)
+                            .profileImage(picture)
+                            .isActive(true)
+                            .build();
+
+                    return userRepository.save(newUser);
+                });
+
+        // 4. Existing account should also become active
+        if (!user.isActive()) {
+            user.setActive(true);
+            userRepository.save(user);
+        }
+
+        // 5. Generate your existing JWT
+        String token = jwtService.generateToken(user);
+
+        // 6. Return the same LoginResponse used by normal login
+        return LoginResponse.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .token(token)
+                .build();
+    }
 }

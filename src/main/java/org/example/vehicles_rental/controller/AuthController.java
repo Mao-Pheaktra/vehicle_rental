@@ -2,6 +2,7 @@ package org.example.vehicles_rental.controller;
 
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.vehicles_rental.dto.request.*;
 import org.example.vehicles_rental.dto.response.ApiResponse;
@@ -12,10 +13,10 @@ import org.example.vehicles_rental.exception.TooManyRequestException;
 import org.example.vehicles_rental.service.AuthService;
 import org.example.vehicles_rental.service.PasswordResetService;
 import org.example.vehicles_rental.service.RateLimitService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 @RequiredArgsConstructor
 @RestController
@@ -24,6 +25,9 @@ public class AuthController {
     private final AuthService authService;
     private final RateLimitService rateLimitService;
     private final PasswordResetService passwordResetService;
+
+    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+    private String clientId;
     @PostMapping("/register")
     public ApiResponse<RegisterResponse> register(@RequestBody RegisterRequest registerRequest, HttpServletRequest httpServletRequest){
         String ip = httpServletRequest.getRemoteAddr();
@@ -58,6 +62,23 @@ public class AuthController {
         passwordResetService.resetPassword(resetPasswordRequest);
 
         return new ApiResponse<>("Password reset successfully", 200, null);
+    }
+    @GetMapping("/google")
+    public void googleLogin(HttpServletResponse response) throws IOException {
+
+        String googleUrl =
+                "https://accounts.google.com/o/oauth2/v2/auth" +
+                        "?client_id=" + clientId +
+                        "&redirect_uri=http://localhost:8080/api/auth/google/callback" +
+                        "&response_type=code" +
+                        "&scope=openid%20profile%20email";
+
+        response.sendRedirect(googleUrl);
+    }
+    @GetMapping("/google/callback")
+    public ApiResponse<LoginResponse> googleCallback(@RequestParam("code") String code) {
+
+        return new ApiResponse<>("Google login successfully", 200, authService.googleLogin(code));
     }
 
 }

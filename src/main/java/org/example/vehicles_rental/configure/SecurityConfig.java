@@ -28,7 +28,7 @@ public class SecurityConfig {
                 ))
                 .authorizeHttpRequests(auth -> auth
 
-                        // AUTH - PUBLIC
+                        // AUTH - PUBLIC and OAtuh2 with /google/callback
                         .requestMatchers("/api/auth/**").permitAll()
 
                         // USERS - ADMIN
