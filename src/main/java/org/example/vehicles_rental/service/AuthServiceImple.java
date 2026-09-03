@@ -43,6 +43,7 @@ public class AuthServiceImple implements AuthService {
     private final JwtService jwtService;
     private final OtpService otpService;
     private final OtpRepository otpRepository;
+    private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     private String clientId;
@@ -151,7 +152,6 @@ public class AuthServiceImple implements AuthService {
     public LoginResponse googleLogin(String code) {
 
         try {
-            RestTemplate restTemplate = new RestTemplate();
 
             // 1. Exchange Google authorization code for access token
             HttpHeaders tokenHeaders = new HttpHeaders();
