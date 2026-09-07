@@ -23,6 +23,7 @@ public class SecurityConfig {
 
         httpSecurity
                 .csrf(csrf -> csrf.disable())
+                .cors(cors -> {})
                 .sessionManagement(session -> session.sessionCreationPolicy(
                         SessionCreationPolicy.STATELESS
                 ))
@@ -84,7 +85,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/paymentMethods/**").hasRole("ADMIN")
 
                         // ADMIN DASHBOARD - ADMIN
-                        .requestMatchers(HttpMethod.GET, "/api/admin/dashboard/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/dashboard/**").permitAll()
 
                         // ADMIN USER - ADMIN
                         .requestMatchers(HttpMethod.GET, "/api/admin/user/**").hasRole("ADMIN")
