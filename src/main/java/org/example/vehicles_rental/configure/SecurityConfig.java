@@ -72,11 +72,17 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/payments/bakong/create").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/payments/bakong/*/status").authenticated()
 
+<<<<<<< HEAD
                         // PAYMENTS - ADMIN
                         .requestMatchers(HttpMethod.GET, "/api/payments/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/payments/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/payments/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/payments/**").hasRole("ADMIN")
+=======
+        //                        Category
+                                .requestMatchers(HttpMethod.GET,"/api/admin/category").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET,"/api/admin/bookings").hasRole("ADMIN")
+>>>>>>> fix_dashboard
 
                         // PAYMENT METHODS - ADMIN
                         .requestMatchers(HttpMethod.GET, "/api/paymentMethods/**").hasRole("ADMIN")

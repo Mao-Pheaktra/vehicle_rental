@@ -7,8 +7,11 @@ import org.example.vehicles_rental.admin.dashboard.dto.RevenueResponse;
 import org.example.vehicles_rental.entity.Vehicle;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface DashboardRepository extends JpaRepository<Vehicle, Long> {
@@ -114,4 +117,38 @@ public interface DashboardRepository extends JpaRepository<Vehicle, Long> {
             ORDER BY b.id DESC
             """)
     List<RecentBookingResponse> getRecentBookings();
+
+    // 10. Count users between dates
+    @Query("""
+        SELECT COUNT(u)
+        FROM User u
+        WHERE u.createAt >= :start
+        AND u.createAt < :end
+        """)
+    Long countUsersBetween(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
+    // 11. Pending approval bookings
+    @Query("""
+        SELECT COUNT(b)
+        FROM Booking b
+        WHERE b.status = 'PENDING'
+        """)
+    Long countPendingBookings();
+
+    //12. Current month revenue
+    // Current month's revenue
+    @Query("""
+    SELECT COALESCE(SUM(b.totalPrice), 0)
+    FROM Booking b
+    WHERE b.status = 'COMPLETED'
+    AND b.returnDate >= :start
+    AND b.returnDate < :end
+    """)
+    BigDecimal getRevenueBetween(
+            @Param("start") LocalDate start,
+            @Param("end") LocalDate end
+    );
 }

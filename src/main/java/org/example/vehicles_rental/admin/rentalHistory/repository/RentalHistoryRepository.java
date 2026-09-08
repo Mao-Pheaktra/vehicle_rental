@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 
-public interface BookingDashboardRepository
+public interface RentalHistoryRepository
         extends JpaRepository<Booking, Long> {
 
     long countByStatus(BookingStatus status);

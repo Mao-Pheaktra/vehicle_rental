@@ -86,6 +86,7 @@ public class AuthController {
         response.sendRedirect(googleUrl);
     }
 
+
     @GetMapping("/google/callback")
     public ApiResponse<LoginResponse> googleCallback(
             @RequestParam("code") String code
