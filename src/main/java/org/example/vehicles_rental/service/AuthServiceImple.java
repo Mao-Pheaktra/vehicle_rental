@@ -18,10 +18,15 @@ import org.example.vehicles_rental.security.JwtService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.ObjectMapper;
+
+import org.springframework.web.client.RestTemplate;
+
+
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -30,9 +35,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
-import tools.jackson.databind.JsonNode;
-
+import tools.jackson.databind.ObjectMapper;
 
 
 @Service
@@ -43,28 +46,27 @@ public class AuthServiceImple implements AuthService {
     private final JwtService jwtService;
     private final OtpService otpService;
     private final OtpRepository otpRepository;
-    private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
-    private String clientId;
+
+    private String googleClientId;
 
     @Value("${spring.security.oauth2.client.registration.google.client-secret}")
-    private String clientSecret;
+    private String googleClientSecret;
 
-    @Value("${spring.security.oauth2.client.registration.google.redirect-uri}")
-    private String redirectUri;
+    private final RestTemplate restTemplate = new RestTemplate();
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
 
     @Override
-    public RegisterResponse register(RegisterRequest registerRequest){
+
+    public RegisterResponse register(RegisterRequest registerRequest) {
 
         Optional<User> existingUser = userRepository.findByEmail(registerRequest.getEmail());
-        if (existingUser.isPresent()){
+        if (existingUser.isPresent()) {
             User user = existingUser.get();
 
-            if (!user.isActive()){
+            if (!user.isActive()) {
                 user.setName(registerRequest.getName());
                 user.setPwd(passwordEncoder.encode(registerRequest.getPwd()));
 
@@ -80,7 +82,7 @@ public class AuthServiceImple implements AuthService {
                         .message("Registration successful. Please verify the OTP sent to your email.")
                         .build();
             }
-            throw new EmaliAlreadyExists("Email already exists");
+            throw new EmailAlreadyExists("Email already exists");
 
         }
         User user = User.builder()
@@ -101,14 +103,16 @@ public class AuthServiceImple implements AuthService {
                 .message("Registration successful. Please verify the OTP sent to your email.")
                 .build();
     }
+
+
     @Override
-    public LoginResponse login(LoginRequest loginRequest){
+    public LoginResponse login(LoginRequest loginRequest) {
         User user = userRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(()-> new EmaliAlreadyExists("Incorrect email or password"));
-        if (!passwordEncoder.matches(loginRequest.getPwd(), user.getPwd())){
+                .orElseThrow(() -> new EmailAlreadyExists("Incorrect email or password"));
+        if (!passwordEncoder.matches(loginRequest.getPwd(), user.getPwd())) {
             throw new EmailAndPasswordNotMatch("Email and password are not match");
         }
-        if (!user.isActive()){
+        if (!user.isActive()) {
             throw new EmailVerify("Please verify your email first");
         }
         String token = jwtService.generateToken(user);
@@ -120,13 +124,14 @@ public class AuthServiceImple implements AuthService {
                 .token(token)
                 .build();
     }
+
     @Override
     @Transactional
-    public VerifyOtpResponse verifyOtp(VerifyOtpRequest verifyOtpRequest){
+    public VerifyOtpResponse verifyOtp(VerifyOtpRequest verifyOtpRequest) {
         User user = userRepository.findByEmail(verifyOtpRequest.getEmail())
-                .orElseThrow(()-> new NotFoundException("Email Not Found"));
+                .orElseThrow(() -> new NotFoundException("Email Not Found"));
         Otp otp = otpRepository.findByUser(user)
-                .orElseThrow(()-> new NotFoundException("OTP Not Found"));
+                .orElseThrow(() -> new NotFoundException("OTP Not Found"));
         if (otp.getExpiryTime().isBefore(LocalDateTime.now())) {
             otpRepository.delete(otp);
             if (!user.isActive()) {
@@ -134,7 +139,7 @@ public class AuthServiceImple implements AuthService {
             }
             throw new OtpExpireException("OTP expired. Please register again");
         }
-        if (!otp.getOtp().equals(verifyOtpRequest.getOtp())){
+        if (!otp.getOtp().equals(verifyOtpRequest.getOtp())) {
             throw new InvalidOTP("Invalid OTP");
         }
         otp.setVerified(true);
@@ -149,106 +154,98 @@ public class AuthServiceImple implements AuthService {
     }
 
     @Override
+    @Transactional
     public LoginResponse googleLogin(String code) {
 
-        try {
+        // 1. Exchange authorization code for Google access token
+        String tokenUrl = "https://oauth2.googleapis.com/token";
 
-            // 1. Exchange Google authorization code for access token
-            HttpHeaders tokenHeaders = new HttpHeaders();
-            tokenHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        HttpHeaders tokenHeaders = new HttpHeaders();
+        tokenHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-            MultiValueMap<String, String> tokenBody = new LinkedMultiValueMap<>();
-            tokenBody.add("code", code);
-            tokenBody.add("client_id", clientId);
-            tokenBody.add("client_secret", clientSecret);
-            tokenBody.add("redirect_uri", redirectUri);
-            tokenBody.add("grant_type", "authorization_code");
+        MultiValueMap<String, String> tokenRequest = new LinkedMultiValueMap<>();
 
-            HttpEntity<MultiValueMap<String, String>> tokenRequest =
-                    new HttpEntity<>(tokenBody, tokenHeaders);
+        tokenRequest.add("code", code);
+        tokenRequest.add("client_id", googleClientId);
+        tokenRequest.add("client_secret", googleClientSecret);
+        tokenRequest.add("redirect_uri", "http://localhost:8080/api/auth/google/callback");
+        tokenRequest.add("grant_type", "authorization_code");
 
-            ResponseEntity<String> tokenResponse = restTemplate.postForEntity(
-                    "https://oauth2.googleapis.com/token",
-                    tokenRequest,
-                    String.class
-            );
+        HttpEntity<MultiValueMap<String, String>> tokenEntity = new HttpEntity<>(tokenRequest, tokenHeaders);
 
-            JsonNode tokenJson = objectMapper.readTree(tokenResponse.getBody());
-
-            String accessToken = tokenJson.get("access_token").asText();
-
-            // 2. Get Google user information
-            HttpHeaders userHeaders = new HttpHeaders();
-            userHeaders.setBearerAuth(accessToken);
-
-            HttpEntity<Void> userRequest = new HttpEntity<>(userHeaders);
-
-            ResponseEntity<String> userResponse = restTemplate.exchange(
-                    "https://www.googleapis.com/oauth2/v3/userinfo",
-                    HttpMethod.GET,
-                    userRequest,
-                    String.class
-            );
-
-            JsonNode googleUser = objectMapper.readTree(userResponse.getBody());
-
-            String email = googleUser.get("email").asText();
-            String name = googleUser.has("name")
-                    ? googleUser.get("name").asText()
-                    : email;
-
-            String profileImage = googleUser.has("picture")
-                    ? googleUser.get("picture").asText()
-                    : null;
-
-            // 3. Find user by email
-            Optional<User> existingUser = userRepository.findByEmail(email);
-
-            User user;
-
-            if (existingUser.isPresent()) {
-
-                user = existingUser.get();
-
-                // Update profile image from Google
-                if (profileImage != null) {
-                    user.setProfileImage(profileImage);
-                }
-
-                // Make sure Google account is active
-                user.setActive(true);
-
-                userRepository.save(user);
-
-            } else {
-
-                // 4. Create new Google user
-                user = User.builder()
-                        .name(name)
-                        .email(email)
-                        .role(Role.CLIENT)
-                        .isActive(true)
-                        .profileImage(profileImage)
-                        .build();
-
-                user = userRepository.save(user);
-            }
-
-            // 5. Generate JWT
-            String token = jwtService.generateToken(user);
-
-            // 6. Return normal LoginResponse
-            return LoginResponse.builder()
-                    .id(user.getId())
-                    .name(user.getName())
-                    .email(user.getEmail())
-                    .role(user.getRole())
-                    .token(token)
-                    .build();
-
-        } catch (Exception e) {
-            throw new RuntimeException("Google login failed", e);
+        ResponseEntity<Map> tokenResponse = restTemplate.exchange(
+                tokenUrl,
+                HttpMethod.POST,
+                tokenEntity,
+                Map.class);
+        if (!tokenResponse.getStatusCode().is2xxSuccessful() || tokenResponse.getBody() == null) {
+            throw new FailToGetGgToken("Fail to get Google access token");
         }
-    }
 
+        String accessToken = (String) tokenResponse.getBody().get("access_token");
+        // 2. Get Google user information
+        String userInfoUrl = "https://www.googleapis.com/oauth2/v3/userinfo";
+
+        HttpHeaders userInfoHeaders = new HttpHeaders();
+        userInfoHeaders.setBearerAuth(accessToken);
+
+        HttpEntity<Void> userInfoEntity = new HttpEntity<>(userInfoHeaders);
+
+        ResponseEntity<Map> userInfoResponse = restTemplate.exchange(
+                userInfoUrl,
+                HttpMethod.GET,
+                userInfoEntity,
+                Map.class
+        );
+
+        if (!userInfoResponse.getStatusCode().is2xxSuccessful()
+                || userInfoResponse.getBody() == null) {
+            throw new RuntimeException("Failed to get Google user information");
+        }
+
+        Map<String, Object> googleUser = userInfoResponse.getBody();
+
+
+        String email = (String) googleUser.get("email");
+        String name = (String) googleUser.get("name");
+        String picture = (String) googleUser.get("picture");
+
+        if (email == null || email.isBlank()) {
+            throw new RuntimeException("Google account email not found");
+        }
+
+        // 3. Find existing user or create a new one
+        User user = userRepository.findByEmail(email)
+                .orElseGet(() -> {
+
+                    User newUser = User.builder()
+                            .name(name != null ? name : email)
+                            .email(email)
+                            .pwd(passwordEncoder.encode(UUID.randomUUID().toString()))
+                            .role(Role.CLIENT)
+                            .profileImage(picture)
+                            .isActive(true)
+                            .build();
+
+                    return userRepository.save(newUser);
+                });
+
+        // 4. Existing account should also become active
+        if (!user.isActive()) {
+            user.setActive(true);
+            userRepository.save(user);
+        }
+
+        // 5. Generate your existing JWT
+        String token = jwtService.generateToken(user);
+
+        // 6. Return the same LoginResponse used by normal login
+        return LoginResponse.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .token(token)
+                .build();
+    }
 }
