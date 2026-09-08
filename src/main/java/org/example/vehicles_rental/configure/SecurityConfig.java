@@ -75,6 +75,7 @@ public class SecurityConfig {
 
         //                        Category
                                 .requestMatchers(HttpMethod.GET,"/api/admin/category").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET,"/api/admin/bookings").hasRole("ADMIN")
 
         //                        Payment
                                 .requestMatchers(HttpMethod.GET,"/api/admin/payment").hasRole("ADMIN")

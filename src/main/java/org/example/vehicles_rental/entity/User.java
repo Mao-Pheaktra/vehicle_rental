@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import org.example.vehicles_rental.enums.Gender;
 import org.example.vehicles_rental.enums.Role;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Data
 @Table(name = "tb_users")
@@ -31,4 +33,5 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Otp otp;
     private boolean isActive=false;
+    private LocalDateTime createAt;
 }
