@@ -16,4 +16,5 @@ public class RentalHistoryDashboardResponse {
     private BigDecimal revenue;
     private double averageRating;
     private long totalDaysRented;
+
 }

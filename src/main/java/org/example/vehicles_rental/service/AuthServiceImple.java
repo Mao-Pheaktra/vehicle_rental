@@ -55,11 +55,7 @@ public class AuthServiceImple implements AuthService {
     private String googleClientSecret;
 
     private final RestTemplate restTemplate = new RestTemplate();
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> fix_dashboard
 
 
     @Override
@@ -108,10 +104,7 @@ public class AuthServiceImple implements AuthService {
                 .build();
     }
 
-<<<<<<< HEAD
-=======
 
->>>>>>> fix_dashboard
     @Override
     public LoginResponse login(LoginRequest loginRequest) {
         User user = userRepository.findByEmail(loginRequest.getEmail())
@@ -161,10 +154,7 @@ public class AuthServiceImple implements AuthService {
     }
 
     @Override
-<<<<<<< HEAD
 
-=======
->>>>>>> fix_dashboard
     @Transactional
     public LoginResponse googleLogin(String code) {
 
@@ -216,10 +206,7 @@ public class AuthServiceImple implements AuthService {
 
         Map<String, Object> googleUser = userInfoResponse.getBody();
 
-<<<<<<< HEAD
-=======
 
->>>>>>> fix_dashboard
         String email = (String) googleUser.get("email");
         String name = (String) googleUser.get("name");
         String picture = (String) googleUser.get("picture");
@@ -262,8 +249,4 @@ public class AuthServiceImple implements AuthService {
                 .token(token)
                 .build();
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> fix_dashboard

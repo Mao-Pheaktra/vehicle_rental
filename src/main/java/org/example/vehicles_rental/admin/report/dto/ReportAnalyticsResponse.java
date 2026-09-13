@@ -28,5 +28,9 @@ public class ReportAnalyticsResponse {
 
     private long supportTickets;
 
+    private List<WeeklyAnalyticsResponse> weeklyData;
+
     private List<MonthlyAnalyticsResponse> monthlyData;
+
+    private List<YearlyAnalyticsResponse> yearlyData;
 }

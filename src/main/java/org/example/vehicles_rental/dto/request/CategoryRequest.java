@@ -4,14 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
+import org.example.vehicles_rental.enums.CategoryStatus;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class CategoryRequest {
-    private String category_name;
+    private String name;
     private String description;
+    private CategoryStatus status;
 }

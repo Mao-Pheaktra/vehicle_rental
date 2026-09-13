@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class RentalHistoryDashboardController {
     private final RentalHistoryDashboardService rentalHistoryDashboardService;
     @GetMapping
-    public ApiResponse<RentalHistoryDashboardResponse> etStatistics(){
+    public ApiResponse<RentalHistoryDashboardResponse> getStatistics(){
         return new ApiResponse<>("Get api rental history successfully", 200, rentalHistoryDashboardService.getStatistics());
     }
 }

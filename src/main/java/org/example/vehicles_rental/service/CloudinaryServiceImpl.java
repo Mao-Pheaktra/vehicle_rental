@@ -34,5 +34,33 @@ public class CloudinaryServiceImpl implements CloudinaryService{
         return result.get("secure_url").toString();
     }
 
+    @Override
+    public String uploadCustomizerLogo(MultipartFile file) throws IOException {
+
+        Map<?, ?> result = cloudinary.uploader().upload(
+                file.getBytes(),
+                ObjectUtils.asMap(
+                        "folder",
+                        "vehicle_rental/customizer/logo"
+                )
+        );
+
+        return result.get("secure_url").toString();
+    }
+
+    @Override
+    public String uploadCustomizerHeroImage(MultipartFile file) throws IOException {
+
+        Map<?, ?> result = cloudinary.uploader().upload(
+                file.getBytes(),
+                ObjectUtils.asMap(
+                        "folder",
+                        "vehicle_rental/customizer/hero"
+                )
+        );
+
+        return result.get("secure_url").toString();
+    }
+
 
 }

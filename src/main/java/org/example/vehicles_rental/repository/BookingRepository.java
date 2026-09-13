@@ -132,4 +132,58 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("endDate") LocalDateTime endDate,
             @Param("status") BookingStatus status
     );
+    // Weekly revenue
+    @Query("""
+    SELECT COALESCE(SUM(b.totalPrice), 0)
+    FROM Booking b
+    WHERE b.createdAt >= :startDate
+      AND b.createdAt < :endDate
+      AND b.status = :status
+""")
+    BigDecimal sumRevenueForWeek(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("status") BookingStatus status
+    );
+
+
+    // Weekly bookings
+    @Query("""
+    SELECT COUNT(b)
+    FROM Booking b
+    WHERE b.createdAt >= :startDate
+      AND b.createdAt < :endDate
+""")
+    long countBookingsForWeek(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
+
+    // Yearly revenue
+    @Query("""
+    SELECT COALESCE(SUM(b.totalPrice), 0)
+    FROM Booking b
+    WHERE b.createdAt >= :startDate
+      AND b.createdAt < :endDate
+      AND b.status = :status
+""")
+    BigDecimal sumRevenueForYear(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("status") BookingStatus status
+    );
+
+
+    // Yearly bookings
+    @Query("""
+    SELECT COUNT(b)
+    FROM Booking b
+    WHERE b.createdAt >= :startDate
+      AND b.createdAt < :endDate
+""")
+    long countBookingsForYear(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
 }

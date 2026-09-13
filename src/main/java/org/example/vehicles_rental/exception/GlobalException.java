@@ -119,11 +119,17 @@ public class GlobalException {
     // 500 INTERNAL SERVER ERROR
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleUnexpectedException(Exception e) {
+
+        e.printStackTrace();
+
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of(
                         "status", 500,
-                        "message", "An unexpected error occurred"
+                        "message", e.getMessage() != null
+                                ? e.getMessage()
+                                : "An unexpected error occurred",
+                        "exception", e.getClass().getSimpleName()
                 ));
     }
 }

@@ -90,12 +90,12 @@ public interface DashboardRepository extends JpaRepository<Vehicle, Long> {
     // 8. Category statistics
     @Query("""
             SELECT new org.example.vehicles_rental.admin.dashboard.dto.CategoryStatisticResponse(
-                c.category_name,
+                c.categoryName,
                 COUNT(v)
             )
             FROM Vehicle v
             JOIN v.category c
-            GROUP BY c.category_name
+            GROUP BY c.categoryName
             """)
     List<CategoryStatisticResponse> getCategoryStatistics();
 

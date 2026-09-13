@@ -2,8 +2,8 @@ package org.example.vehicles_rental.admin.rentalHistory.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.vehicles_rental.admin.rentalHistory.dto.RentalHistoryDashboardResponse;
+import org.example.vehicles_rental.admin.rentalHistory.repository.RentalHistoryRepository;
 import org.example.vehicles_rental.enums.BookingStatus;
-import org.example.vehicles_rental.repository.BookingRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -12,26 +12,26 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class RentalHistoryDashboardServiceImple implements RentalHistoryDashboardService {
 
-    private final BookingRepository bookingRepository;
+    private final RentalHistoryRepository rentalHistoryRepository;
 
     @Override
     public RentalHistoryDashboardResponse getStatistics() {
 
         long total =
-                bookingRepository.count();
+                rentalHistoryRepository.count();
 
         long completed =
-                bookingRepository.countByStatus(
+                rentalHistoryRepository.countByStatus(
                         BookingStatus.COMPLETED
                 );
 
         BigDecimal revenue =
-                bookingRepository.sumRevenueByStatus(
+                rentalHistoryRepository.sumRevenueByStatus(
                         BookingStatus.COMPLETED
                 );
 
         long totalDaysRented =
-                bookingRepository.sumTotalDaysByStatus(
+                rentalHistoryRepository.sumTotalDaysByStatus(
                         BookingStatus.COMPLETED
                 );
 

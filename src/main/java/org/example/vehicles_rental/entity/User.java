@@ -34,4 +34,6 @@ public class User {
     private Otp otp;
     private boolean isActive=false;
     private LocalDateTime createAt;
+    @Column(name = "telegram_chat_id")
+    private String telegramChatId;
 }

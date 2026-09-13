@@ -17,4 +17,5 @@ public class Vehicle_imageResponse {
     private String image;
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
+    
 }

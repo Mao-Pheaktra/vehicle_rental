@@ -29,6 +29,7 @@ public class BookingServiceImpl implements BookingService {
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
     private final NotificationService notificationService;
+    private final TelegramNotificationService telegramNotificationService;
 
     @Override
     public BookingResponse create(BookingRequest request) {
@@ -67,9 +68,17 @@ public class BookingServiceImpl implements BookingService {
         booking.setTotalPrice(totalPrice);
         booking.setStatus(BookingStatus.PENDING);
         Booking saved = bookingRepository.save(booking);
-        notificationService.notifyNewBooking(saved);
+        telegramNotificationService.notifyNewBooking(booking);
+
+        try {
+            notificationService.notifyNewBooking(saved);
+        } catch (Exception e) {
+            System.out.println("Notification failed: " + e.getMessage());
+        }
 
         return mapToResponse(saved);
+
+       
     }
     @Override
     public BookingResponse getById(Long id) {
@@ -161,6 +170,7 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new BookingNotFound(id));
         bookingRepository.delete(booking);
     }
+    
     private BookingResponse mapToResponse(Booking booking) {
         return new BookingResponse(
                 booking.getId(),

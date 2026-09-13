@@ -28,7 +28,7 @@ public interface RentalHistoryRepository
             FROM Booking b
             WHERE b.status = :status
             """)
-    long sumTotalDaysByStatus(
+    Long sumTotalDaysByStatus(
             @Param("status") BookingStatus status
     );
 }

@@ -61,6 +61,7 @@ public class UserServiceImple implements UserService{
                 .role(user.getRole())
                 .isActive(user.isActive())
                 .profileImage(imageUrl)
+                .telegramChatId(user.getTelegramChatId())
                 .build();
     }
     @Override
@@ -77,6 +78,7 @@ public class UserServiceImple implements UserService{
                     .role(user.getRole())
                     .isActive(user.isActive())
                     .profileImage(user.getProfileImage())
+                    .telegramChatId(user.getTelegramChatId())
                     .build();
             responses.add(userResponse);
         }
@@ -94,6 +96,7 @@ public class UserServiceImple implements UserService{
                 .role(user.getRole())
                 .isActive(user.isActive())
                 .profileImage(user.getProfileImage())
+                .telegramChatId(user.getTelegramChatId())
                 .build();
         return userResponse;
     }
@@ -149,6 +152,7 @@ public class UserServiceImple implements UserService{
                 .role(user.getRole())
                 .isActive(user.isActive())
                 .profileImage(user.getProfileImage())
+                .telegramChatId(user.getTelegramChatId())
                 .build();
         return userResponse;
     }

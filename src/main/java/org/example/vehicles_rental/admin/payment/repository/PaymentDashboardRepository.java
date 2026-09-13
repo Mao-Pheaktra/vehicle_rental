@@ -1,4 +1,4 @@
-package org.example.vehicles_rental.repository;
+package org.example.vehicles_rental.admin.payment.repository;
 
 import org.example.vehicles_rental.entity.Payment;
 import org.example.vehicles_rental.enums.PaymentStatus;

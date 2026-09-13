@@ -28,6 +28,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final BookingRepository bookingRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final NotificationService notificationService;
+    private final TelegramNotificationService telegramNotificationService;
 
     // CREATE PAYMENT
     @Override
@@ -66,6 +67,7 @@ public class PaymentServiceImpl implements PaymentService {
         // paymentDate is NOT set here.
         // It will only be set when payment becomes PAID.
         Payment saved = paymentRepository.save(payment);
+        telegramNotificationService.notifyPaymentSuccess(booking);
 
         notificationService.notifyPaymentReceived(saved);
         return mapToResponse(saved);

@@ -9,8 +9,8 @@ public class VehicleMapper {
     public VehicleResponse toVehicleResponse(Vehicle vehicle) {
        return VehicleResponse.builder()
                 .id(vehicle.getId())
-                .category_name(vehicle.getCategory().getCategory_name())
-                .brand_name(vehicle.getBrand().getBrand_name())
+                .category_name(vehicle.getCategory().getCategoryName())
+                .brand_name(vehicle.getBrand().getBrandName())
                 .name(vehicle.getName())
                 .model(vehicle.getModel())
                 .year(vehicle.getYear())
