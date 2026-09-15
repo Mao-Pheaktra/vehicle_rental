@@ -12,6 +12,7 @@ public class VehicleMapper {
                 .category_name(vehicle.getCategory().getCategoryName())
                 .brand_name(vehicle.getBrand().getBrandName())
                 .name(vehicle.getName())
+               .mainImage(vehicle.getMainImage())
                 .model(vehicle.getModel())
                 .year(vehicle.getYear())
                 .plate_number(vehicle.getPlate_number())

@@ -8,6 +8,7 @@ import org.example.vehicles_rental.enums.Status;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -18,6 +19,7 @@ public class VehicleResponse {
     private String category_name;
     private String brand_name;
     private String name;
+    private String mainImage;
     private String model;
     private Integer year;
     private String plate_number;

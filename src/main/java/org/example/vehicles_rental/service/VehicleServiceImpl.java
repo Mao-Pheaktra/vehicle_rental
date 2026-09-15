@@ -6,6 +6,7 @@ import org.example.vehicles_rental.dto.response.VehicleResponse;
 import org.example.vehicles_rental.entity.Brand;
 import org.example.vehicles_rental.entity.Categories;
 import org.example.vehicles_rental.entity.Vehicle;
+import org.example.vehicles_rental.entity.Vehicle_Image;
 import org.example.vehicles_rental.exception.NotFoundException;
 import org.example.vehicles_rental.mapper.VehicleMapper;
 import org.example.vehicles_rental.repository.BrandRepository;
@@ -14,7 +15,9 @@ import org.example.vehicles_rental.repository.VehicleRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,9 +28,11 @@ public class VehicleServiceImpl implements VehicleService {
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
     private final VehicleMapper vehicleMapper;
+    private final CloudinaryService cloudinaryService;
+
 
     @Override
-    public VehicleResponse create(VehicleRequest vehicleRequest) {
+    public VehicleResponse create(VehicleRequest vehicleRequest, MultipartFile mainImage)throws IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         Categories categories = categoryRepository
@@ -36,10 +41,16 @@ public class VehicleServiceImpl implements VehicleService {
         Brand brand = brandRepository
                 .findById(vehicleRequest.getBrand_id())
                 .orElseThrow(()-> new RuntimeException("Brand Not Found"));
+        String fileUrl = null;
+
+        if (mainImage != null && !mainImage.isEmpty()) {
+            fileUrl = cloudinaryService.uploadMainImage(mainImage);
+        }
         Vehicle vehicle = Vehicle.builder()
                 .category(categories)
                 .brand(brand)
                 .name(vehicleRequest.getName())
+                .mainImage(fileUrl)
                 .description(vehicleRequest.getDescription())
                 .model(vehicleRequest.getModel())
                 .year(vehicleRequest.getYear())
@@ -76,7 +87,7 @@ public class VehicleServiceImpl implements VehicleService {
     }
 
     @Override
-    public VehicleResponse update(Long id, VehicleRequest vehicleRequest) {
+    public VehicleResponse update(Long id, VehicleRequest vehicleRequest, MultipartFile mainImage) throws IOException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         Vehicle vehicle = vehicleRepository.findById(id)
@@ -87,6 +98,10 @@ public class VehicleServiceImpl implements VehicleService {
         Brand brand = brandRepository
                 .findById(vehicleRequest.getBrand_id())
                 .orElseThrow(()-> new RuntimeException("Brand Not Found"));
+        if (mainImage !=null && !mainImage.isEmpty()){
+            String fileUrl = cloudinaryService.uploadMainImage(mainImage);
+            vehicle.setMainImage(fileUrl);
+        }
                 vehicle.setCategory(categories);
                 vehicle.setBrand(brand);
                 vehicle.setName(vehicleRequest.getName());

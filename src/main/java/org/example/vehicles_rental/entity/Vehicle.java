@@ -25,6 +25,7 @@ public class Vehicle {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
+    private String mainImage;
     private String model;
     private Integer year;
     private String plate_number;

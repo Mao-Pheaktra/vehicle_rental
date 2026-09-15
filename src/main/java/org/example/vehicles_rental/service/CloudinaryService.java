@@ -11,4 +11,5 @@ public interface CloudinaryService {
     String uploadProfileImage(MultipartFile file) throws IOException;
     String uploadCustomizerLogo(MultipartFile file) throws IOException;
     String uploadCustomizerHeroImage(MultipartFile file) throws IOException;
+    String uploadMainImage(MultipartFile file) throws IOException;
 }

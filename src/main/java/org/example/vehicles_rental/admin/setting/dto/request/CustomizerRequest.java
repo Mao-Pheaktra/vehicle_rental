@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 public class CustomizerRequest {
     private String logo;
 
+    private String websiteName;
+
     private String heroImage;
 
     private String title;

@@ -34,7 +34,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/telegram/**").permitAll()
 
                         // USERS - ADMIN
-                        .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/users/**").hasRole("ADMIN")
@@ -53,7 +53,7 @@ public class SecurityConfig {
 
                         // VEHICLES - USER + ADMIN
                         .requestMatchers(HttpMethod.GET, "/api/vehicle/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/vehicle/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/vehicle/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/vehicle/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/vehicle/**").hasRole("ADMIN")
 
@@ -64,29 +64,29 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/vehicle_image/**").hasRole("ADMIN")
 
                         // BOOKINGS - ADMIN
-                        .requestMatchers(HttpMethod.GET, "/api/bookings/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/bookings/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/bookings/**").hasAnyRole("CLIENT", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/bookings/**").hasAnyRole("CLIENT", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/bookings/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/bookings/**").hasRole("ADMIN")
 
                         // BAKONG PAYMENT - USER + ADMIN
-                        .requestMatchers(HttpMethod.POST, "/api/payments/bakong/create").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/payments/bakong/*/status").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/payments/bakong/create").hasAnyRole("CLIENT", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/payments/bakong/*/status").hasAnyRole("CLIENT", "ADMIN")
 
 
                         // PAYMENTS - ADMIN
-                        .requestMatchers(HttpMethod.GET, "/api/payments/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/payments/**").hasAnyRole("CLIENT", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/payments/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/payments/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/payments/**").hasRole("ADMIN")
                         //Admin
-                        .requestMatchers("/api/admin/**").permitAll()
+
         //              Category
-                        .requestMatchers(HttpMethod.GET,"/api/admin/category").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/admin/category").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST,"/api/admin/category").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE,"/api/admin/category").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT,"/api/admin/category").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET,"/api/admin/bookings").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/admin/bookings").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST,"/api/admin/bookings").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE,"/api/admin/bookings").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT,"/api/admin/bookings").hasRole("ADMIN")
@@ -97,7 +97,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/paymentMethods/**").hasRole("ADMIN")
 
                         // ADMIN DASHBOARD - ADMIN
-                        .requestMatchers(HttpMethod.GET, "/api/admin/dashboard/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/admin/dashboard/**").hasRole("ADMIN")
 
                         // ADMIN USER - ADMIN
                         .requestMatchers(HttpMethod.GET, "/api/admin/user/**").hasRole("ADMIN")
@@ -109,37 +109,37 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/admin/category").hasRole("ADMIN")
 
                         // ADMIN PAYMENT - ADMIN
-                        .requestMatchers(HttpMethod.GET, "/api/admin/payment").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/admin/payment").hasRole("ADMIN")
 
                         // RENTAL HISTORY - ADMIN
-                        .requestMatchers(HttpMethod.GET, "/api/admin/rental_history").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/admin/rental_history").hasRole("ADMIN")
 
                         // REPORT - ADMIN
-                        .requestMatchers(HttpMethod.GET, "/api/admin/report").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/admin/report").hasRole("ADMIN")
 
                         // GENERAL SETTINGS - ADMIN
-                        .requestMatchers(HttpMethod.GET, "/api/admin/setting/general").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/admin/setting/general").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/admin/setting/general").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/admin/setting/general").hasRole("ADMIN")
 
                         // NOTIFICATION SETTINGS - ADMIN
-                        .requestMatchers(HttpMethod.GET, "/api/admin/setting/notification").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/admin/setting/notification").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/admin/setting/notification").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/admin/setting/notification").hasRole("ADMIN")
 
                         // SECURITY SETTINGS - ADMIN
-                        .requestMatchers(HttpMethod.GET, "/api/admin/setting/security").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/admin/setting/security/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/admin/setting/security").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/admin/setting/security/**").hasRole("ADMIN")
 
                         // PAYMENT SETTINGS - ADMIN
-                        .requestMatchers(HttpMethod.GET, "/api/admin/setting/payment").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/admin/setting/payment").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/admin/setting/payment").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/admin/setting/payment").hasRole("ADMIN")
 
                         // NOTIFICATION - ADMIN
-                        .requestMatchers(HttpMethod.GET, "/api/admin/notification/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/admin/notification/**").hasRole("ADMIN")
 
                         // CUSTOMIZER - ADMIN
 // CUSTOMIZER - ADMIN
                                 .requestMatchers(HttpMethod.GET, "/api/admin/setting/customizer", "/api/admin/setting/customizer/**").permitAll()
-                                .requestMatchers(HttpMethod.PUT, "/api/admin/setting/customizer", "/api/admin/setting/customizer/**").permitAll()
+                                .requestMatchers(HttpMethod.PUT, "/api/admin/setting/customizer", "/api/admin/setting/customizer/**").hasRole("ADMIN")
 
                         // CHANGE PASSWORD - USER + ADMIN
                         .requestMatchers(HttpMethod.POST, "/api/request_pwd/change").authenticated()

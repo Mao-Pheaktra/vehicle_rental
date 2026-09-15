@@ -19,6 +19,8 @@ public class Customizer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String websiteName;
+
     private String logo;
 
     private String heroImage;

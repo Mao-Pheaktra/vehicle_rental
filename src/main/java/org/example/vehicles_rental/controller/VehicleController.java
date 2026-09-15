@@ -6,7 +6,9 @@ import org.example.vehicles_rental.dto.response.ApiResponse;
 import org.example.vehicles_rental.dto.response.VehicleResponse;
 import org.example.vehicles_rental.service.VehicleService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -15,8 +17,8 @@ import java.util.List;
 public class VehicleController {
     private final VehicleService vehicleService;
     @PostMapping("/create")
-    public ApiResponse<VehicleResponse> create(@RequestBody VehicleRequest vehicleRequest){
-        return new ApiResponse<>("create vehicle successfully",201, vehicleService.create(vehicleRequest));
+    public ApiResponse<VehicleResponse> create(@RequestBody VehicleRequest vehicleRequest, @RequestParam ("mainImage")MultipartFile mainImage) throws IOException {
+        return new ApiResponse<>("create vehicle successfully",201, vehicleService.create(vehicleRequest,mainImage));
     }
     @GetMapping("/getAll")
     public ApiResponse<List<VehicleResponse>> getAll(){
@@ -27,8 +29,8 @@ public class VehicleController {
         return new ApiResponse<>("get vehicle ById successfully",200, vehicleService.getById(id));
     }
     @PutMapping("/update/{id}")
-    public ApiResponse<VehicleResponse> update(@PathVariable Long id,@RequestBody VehicleRequest vehicleRequest){
-        return new ApiResponse<>("update vehicle successfully",201, vehicleService.update(id, vehicleRequest));
+    public ApiResponse<VehicleResponse> update(@PathVariable Long id,@RequestBody VehicleRequest vehicleRequest, @RequestParam ("mainImage")MultipartFile mainImage) throws IOException {
+        return new ApiResponse<>("update vehicle successfully",201, vehicleService.update(id, vehicleRequest, mainImage));
     }
     @DeleteMapping("/delete/{id}")
     public String delete(@PathVariable Long id){

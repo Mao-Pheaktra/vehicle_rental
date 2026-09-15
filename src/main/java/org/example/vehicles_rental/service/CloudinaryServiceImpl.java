@@ -62,5 +62,19 @@ public class CloudinaryServiceImpl implements CloudinaryService{
         return result.get("secure_url").toString();
     }
 
+    @Override
+    public String uploadMainImage(MultipartFile file) throws IOException {
+
+        Map<?, ?> result = cloudinary.uploader().upload(
+                file.getBytes(),
+                ObjectUtils.asMap(
+                        "folder",
+                        "vehicle_rental/mainImage/"
+                )
+        );
+
+        return result.get("secure_url").toString();
+    }
+
 
 }

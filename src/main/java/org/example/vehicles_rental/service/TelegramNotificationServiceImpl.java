@@ -53,8 +53,7 @@ public class TelegramNotificationServiceImpl
                         "📅 Return Date: " + booking.getReturnDate() + "\n" +
                         "🕒 Rental Days: " + booking.getTotalDays() + "\n\n" +
                         "💵 Total Price: $" + booking.getTotalPrice() + "\n" +
-                        "📌 Status: " + booking.getStatus() + "\n\n" +
-                        "Your booking has been created successfully.";
+                        "📌 Status: " + booking.getStatus() + "\n\n";
 
         System.out.println("Sending Telegram message...");
 

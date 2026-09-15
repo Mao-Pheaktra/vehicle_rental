@@ -32,6 +32,7 @@ public class CustomizerServiceImpl implements CustomizerService {
         Customizer customizer = repository.findById(1L)
                 .orElseGet(() -> Customizer.builder()
                         .id(1L)
+                        .websiteName("ChaulTv")
                         .title("Precision Auto")
                         .description("Default description")
                         .buttonText("Explore Fleet")
@@ -53,6 +54,7 @@ public class CustomizerServiceImpl implements CustomizerService {
         Long adminId = getCurrentAdminId();
 
         try {
+
             // 2. Handle Logo Upload & Update
             if (logoFile != null && !logoFile.isEmpty()) {
                 String imageUrl = cloudinaryService.uploadCustomizerLogo(logoFile);
@@ -73,6 +75,7 @@ public class CustomizerServiceImpl implements CustomizerService {
 
             // 4. Update Text Fields
             if (customizerRequest != null) {
+                customizer.setWebsiteName(customizerRequest.getWebsiteName());
                 customizer.setTitle(customizerRequest.getTitle());
                 customizer.setDescription(customizerRequest.getDescription());
                 customizer.setButtonText(customizerRequest.getButtonText());
@@ -116,6 +119,7 @@ public class CustomizerServiceImpl implements CustomizerService {
         return CustomizerResponse.builder()
                 .id(customizer.getId())
                 .logo(customizer.getLogo())
+                .websiteName(customizer.getWebsiteName())
                 .heroImage(customizer.getHeroImage())
                 .title(customizer.getTitle())
                 .description(customizer.getDescription())
