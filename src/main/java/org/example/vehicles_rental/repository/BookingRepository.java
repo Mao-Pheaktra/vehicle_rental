@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
+    List<Booking> findByUserId(Long userId);
 
 //    List<Booking> findByUserId(Long userId);
 //
@@ -36,6 +37,23 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("blockingStatuses") List<BookingStatus> blockingStatuses
     );
 
+    @Query("""
+        SELECT COUNT(b) > 0
+        FROM Booking b
+        WHERE b.vehicle.id = :vehicleId
+          AND b.pickupDate < :returnDate
+          AND b.returnDate > :pickupDate
+          AND b.status IN :blockingStatuses
+          AND b.user.id <> :userId
+    """)
+    boolean existsOverlappingBookingForOtherUser(
+            @Param("vehicleId") Long vehicleId,
+            @Param("userId") Long userId,
+            @Param("pickupDate") LocalDate pickupDate,
+            @Param("returnDate") LocalDate returnDate,
+            @Param("blockingStatuses") List<BookingStatus> blockingStatuses
+    );
+
 
     // UPDATE BOOKING
     @Query("""
@@ -50,6 +68,25 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     boolean existsOverlappingBookingForUpdate(
             @Param("vehicleId") Long vehicleId,
             @Param("bookingId") Long bookingId,
+            @Param("pickupDate") LocalDate pickupDate,
+            @Param("returnDate") LocalDate returnDate,
+            @Param("blockingStatuses") List<BookingStatus> blockingStatuses
+    );
+
+    @Query("""
+        SELECT COUNT(b) > 0
+        FROM Booking b
+        WHERE b.vehicle.id = :vehicleId
+          AND b.id <> :bookingId
+          AND b.pickupDate < :returnDate
+          AND b.returnDate > :pickupDate
+          AND b.status IN :blockingStatuses
+          AND b.user.id <> :userId
+    """)
+    boolean existsOverlappingBookingForOtherUserOnUpdate(
+            @Param("vehicleId") Long vehicleId,
+            @Param("bookingId") Long bookingId,
+            @Param("userId") Long userId,
             @Param("pickupDate") LocalDate pickupDate,
             @Param("returnDate") LocalDate returnDate,
             @Param("blockingStatuses") List<BookingStatus> blockingStatuses

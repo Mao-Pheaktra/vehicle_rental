@@ -45,13 +45,13 @@ public class AuthServiceImple implements AuthService {
     private final OtpService otpService;
     private final OtpRepository otpRepository;
 
-    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+    @Value("${spring.security.oauth2.client.registration.google.client-id:}")
     private String clientId;
 
-    @Value("${spring.security.oauth2.client.registration.google.client-secret}")
+    @Value("${spring.security.oauth2.client.registration.google.client-secret:}")
     private String clientSecret;
 
-    @Value("${spring.security.oauth2.client.registration.google.redirect-uri}")
+    @Value("${spring.security.oauth2.client.registration.google.redirect-uri:http://localhost:8080/api/auth/google/callback}")
     private String redirectUri;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -59,57 +59,97 @@ public class AuthServiceImple implements AuthService {
 
     @Override
     public RegisterResponse register(RegisterRequest registerRequest){
+        if (registerRequest == null) {
+            throw new IllegalArgumentException("Registration data is required");
+        }
 
-        Optional<User> existingUser = userRepository.findByEmail(registerRequest.getEmail());
+        if (registerRequest.getName() == null || registerRequest.getName().isBlank()) {
+            throw new IllegalArgumentException("Name is required");
+        }
+
+        if (registerRequest.getEmail() == null || registerRequest.getEmail().isBlank()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+
+        if (registerRequest.getPwd() == null || registerRequest.getPwd().isBlank()) {
+            throw new IllegalArgumentException("Password is required");
+        }
+
+        String email = registerRequest.getEmail().trim().toLowerCase();
+        String name = registerRequest.getName().trim();
+
+        Optional<User> existingUser = userRepository.findByEmail(email);
         if (existingUser.isPresent()){
             User user = existingUser.get();
 
             if (!user.isActive()){
-                user.setName(registerRequest.getName());
+                user.setName(name);
                 user.setPwd(passwordEncoder.encode(registerRequest.getPwd()));
+                user.setActive(true);
 
                 userRepository.save(user);
 
-                otpService.createOtp(user);
                 return RegisterResponse.builder()
                         .id(user.getId())
                         .name(user.getName())
                         .email(user.getEmail())
                         .pwd(user.getPwd())
                         .role(user.getRole())
-                        .message("Registration successful. Please verify the OTP sent to your email.")
+                        .message("Registration successful. You can login now.")
                         .build();
             }
             throw new EmaliAlreadyExists("Email already exists");
 
         }
         User user = User.builder()
-                .name(registerRequest.getName())
-                .email(registerRequest.getEmail())
+                .name(name)
+                .email(email)
                 .pwd(passwordEncoder.encode(registerRequest.getPwd()))
                 .role(Role.CLIENT)
-                .isActive(false)
+                .isActive(true)
                 .build();
         user = userRepository.save(user);
-        otpService.createOtp(user);
 
         return RegisterResponse.builder()
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())
-                .message("Registration successful. Please verify the OTP sent to your email.")
+                .message("Registration successful. You can login now.")
                 .build();
     }
     @Override
     public LoginResponse login(LoginRequest loginRequest){
-        User user = userRepository.findByEmail(loginRequest.getEmail())
+        if (loginRequest == null) {
+            throw new IllegalArgumentException("Login data is required");
+        }
+
+        if (loginRequest.getEmail() == null || loginRequest.getEmail().isBlank()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+
+        if (loginRequest.getPwd() == null || loginRequest.getPwd().isBlank()) {
+            throw new IllegalArgumentException("Password is required");
+        }
+
+        String email = loginRequest.getEmail().trim().toLowerCase();
+
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(()-> new EmaliAlreadyExists("Incorrect email or password"));
-        if (!passwordEncoder.matches(loginRequest.getPwd(), user.getPwd())){
+        if (user.getPwd() == null || user.getPwd().isBlank()) {
+            throw new EmailAndPasswordNotMatch("This account does not have a password. Please use Google login or reset your password.");
+        }
+
+        if (!passwordEncoder.matches(loginRequest.getPwd().trim(), user.getPwd())){
             throw new EmailAndPasswordNotMatch("Email and password are not match");
         }
         if (!user.isActive()){
-            throw new EmailVerify("Please verify your email first");
+            user.setActive(true);
+            userRepository.save(user);
+        }
+        if (user.getRole() == null) {
+            user.setRole(Role.CLIENT);
+            userRepository.save(user);
         }
         String token = jwtService.generateToken(user);
         return LoginResponse.builder()

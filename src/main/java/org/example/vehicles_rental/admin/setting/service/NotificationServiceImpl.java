@@ -11,7 +11,6 @@ import org.example.vehicles_rental.entity.Payment;
 import org.example.vehicles_rental.entity.User;
 import org.example.vehicles_rental.entity.Vehicle;
 import org.example.vehicles_rental.enums.Role;
-import org.example.vehicles_rental.exception.NotFoundException;
 import org.example.vehicles_rental.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -203,11 +202,16 @@ public class NotificationServiceImpl implements NotificationService{
     private NotificationSettings getSettings() {
 
         return settingsRepository.findById(1L)
-                .orElseThrow(() ->
-                        new NotFoundException(
-                                "Notification settings not found"
-                        )
-                );
+                .orElseGet(() -> {
+                    NotificationSettings settings = new NotificationSettings();
+                    settings.setNewBooking(true);
+                    settings.setPaymentReceived(true);
+                    settings.setBookingCancellation(true);
+                    settings.setNewUserRegistration(true);
+                    settings.setLowAvailabilityAlert(true);
+                    settings.setDailySummaryReport(false);
+                    return settingsRepository.save(settings);
+                });
     }
     @Override
     public List<NotificationResponse> getNotifications(Long userId) {

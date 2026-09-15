@@ -11,8 +11,6 @@ import org.example.vehicles_rental.mapper.VehicleMapper;
 import org.example.vehicles_rental.repository.BrandRepository;
 import org.example.vehicles_rental.repository.CategoryRepository;
 import org.example.vehicles_rental.repository.VehicleRepository;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -28,8 +26,6 @@ public class VehicleServiceImpl implements VehicleService {
 
     @Override
     public VehicleResponse create(VehicleRequest vehicleRequest) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
         Categories categories = categoryRepository
                 .findById(vehicleRequest.getCategory_id())
                 .orElseThrow(()-> new RuntimeException("Category Not Found"));
@@ -56,8 +52,6 @@ public class VehicleServiceImpl implements VehicleService {
 
     @Override
     public List<VehicleResponse> getAll() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
             List<Vehicle> vehicles = vehicleRepository.findAll();
             List<VehicleResponse> vehicleResponses = new ArrayList<>();
             for (Vehicle vehicle1 : vehicles) {
@@ -68,8 +62,6 @@ public class VehicleServiceImpl implements VehicleService {
 
     @Override
     public VehicleResponse getById(Long id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
         Vehicle vehicle = vehicleRepository.findById(id)
                 .orElseThrow(()->new NotFoundException("vehicle id " +id+ "not found."));
         return vehicleMapper.toVehicleResponse(vehicle);
@@ -77,8 +69,6 @@ public class VehicleServiceImpl implements VehicleService {
 
     @Override
     public VehicleResponse update(Long id, VehicleRequest vehicleRequest) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
         Vehicle vehicle = vehicleRepository.findById(id)
                 .orElseThrow(()->new NotFoundException("vehicle id " +id+ "not found."));
         Categories categories = categoryRepository
@@ -106,8 +96,6 @@ public class VehicleServiceImpl implements VehicleService {
 
     @Override
     public void delete(Long id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
         Vehicle vehicle = vehicleRepository.findById(id)
                         .orElseThrow(()-> new NotFoundException("vehicle id " +id+ "not found."));
         vehicleRepository.deleteById(id);

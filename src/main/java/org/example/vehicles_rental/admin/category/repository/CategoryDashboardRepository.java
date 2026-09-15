@@ -1,4 +1,4 @@
-package org.example.vehicles_rental.repository;
+package org.example.vehicles_rental.admin.category.repository;
 
 import org.example.vehicles_rental.entity.Categories;
 import org.springframework.data.jpa.repository.JpaRepository;

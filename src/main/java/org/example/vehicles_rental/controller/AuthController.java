@@ -20,6 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.view.RedirectView;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @RequiredArgsConstructor
 @RestController
@@ -29,11 +33,14 @@ public class AuthController {
     private final RateLimitService rateLimitService;
     private final PasswordResetService passwordResetService;
 
-    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+    @Value("${spring.security.oauth2.client.registration.google.client-id:}")
     private String clientId;
 
-    @Value("${spring.security.oauth2.client.registration.google.redirect-uri}")
+    @Value("${spring.security.oauth2.client.registration.google.redirect-uri:http://localhost:8080/api/auth/google/callback}")
     private String redirectUri;
+
+    @Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
     @PostMapping("/register")
     public ApiResponse<RegisterResponse> register(@RequestBody RegisterRequest registerRequest, HttpServletRequest httpServletRequest){
         String ip = httpServletRequest.getRemoteAddr();
@@ -79,7 +86,8 @@ public class AuthController {
                         "&redirect_uri=" + redirectUri +
                         "&response_type=code" +
                         "&scope=openid%20profile%20email" +
-                        "&access_type=offline";
+                        "&access_type=offline" +
+                        "&prompt=select_account";
 
         return new ApiResponse<>(
                 "Google login URL generated successfully",
@@ -89,15 +97,25 @@ public class AuthController {
     }
 
     @GetMapping("/google/callback")
-    public ApiResponse<LoginResponse> googleCallback(
+    public RedirectView googleCallback(
             @RequestParam("code") String code
     ) {
 
-        return new ApiResponse<>(
-                "Google login successfully",
-                200,
-                authService.googleLogin(code)
-        );
+        LoginResponse loginResponse = authService.googleLogin(code);
+
+        String callbackUrl = frontendUrl
+                + "/auth/google/callback"
+                + "?token=" + encode(loginResponse.getToken())
+                + "&id=" + encode(String.valueOf(loginResponse.getId()))
+                + "&name=" + encode(loginResponse.getName())
+                + "&email=" + encode(loginResponse.getEmail())
+                + "&role=" + encode(String.valueOf(loginResponse.getRole()));
+
+        return new RedirectView(callbackUrl);
+    }
+
+    private String encode(String value) {
+        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
     }
 
 }
