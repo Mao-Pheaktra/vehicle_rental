@@ -68,12 +68,53 @@ public class PaymentController {
         );
     }
 
-    @GetMapping("/bakong/{paymentId}/status")
-    public ResponseEntity<BakongPaymentResponse> checkBakongPayment(
-            @PathVariable Long paymentId) {
+    @PostMapping("/bakong/test-qr")
+    public ResponseEntity<BakongPaymentResponse> createBakongTestQr(
+            @Valid @RequestBody CreatePaymentRequest request) {
 
         return ResponseEntity.ok(
-                bakongPaymentService.checkPayment(paymentId)
+                bakongPaymentService.createTestPayment(request)
+        );
+    }
+
+    @PostMapping("/bakong/scan-qr")
+    public ResponseEntity<BakongPaymentResponse> createBakongScanQr(
+            @Valid @RequestBody CreatePaymentRequest request) {
+
+        return ResponseEntity.ok(
+                bakongPaymentService.createScanPayment(request)
+        );
+    }
+
+    @GetMapping("/bakong/status/{bookingId}")
+    public ResponseEntity<BakongPaymentResponse> checkBakongPayment(
+            @PathVariable Long bookingId,
+            @RequestParam(required = false) String reference) {
+
+        return ResponseEntity.ok(
+                bakongPaymentService.checkPaymentByBooking(bookingId, reference)
+        );
+    }
+
+    @GetMapping("/bakong/test-status")
+    public ResponseEntity<BakongPaymentResponse> checkBakongTestPayment(
+            @RequestParam(required = false) String reference,
+            @RequestParam java.math.BigDecimal amount,
+            @RequestParam(defaultValue = "USD") String currency) {
+
+        return ResponseEntity.ok(
+                bakongPaymentService.checkTestPayment(reference, amount, currency)
+        );
+    }
+
+    @GetMapping("/bakong/scan-status")
+    public ResponseEntity<BakongPaymentResponse> checkBakongScanPayment(
+            @RequestParam(required = false) String reference,
+            @RequestParam java.math.BigDecimal amount,
+            @RequestParam(defaultValue = "USD") String currency) {
+
+        return ResponseEntity.ok(
+                bakongPaymentService.checkScanPayment(reference, amount, currency)
         );
     }
 }

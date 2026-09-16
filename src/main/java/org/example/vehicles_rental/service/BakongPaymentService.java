@@ -12,30 +12,39 @@ import org.example.vehicles_rental.dto.response.BakongPaymentResponse;
 import org.example.vehicles_rental.entity.Booking;
 import org.example.vehicles_rental.entity.Payment;
 import org.example.vehicles_rental.entity.PaymentMethod;
+import org.example.vehicles_rental.entity.User;
 import org.example.vehicles_rental.enums.PaymentMethodName;
 import org.example.vehicles_rental.enums.PaymentMethodStatus;
 import org.example.vehicles_rental.enums.PaymentStatus;
+import org.example.vehicles_rental.enums.Role;
 import org.example.vehicles_rental.exception.BookingNotFound;
-import org.example.vehicles_rental.exception.PaymentAlreadyExists;
+import org.example.vehicles_rental.exception.NotFoundException;
 import org.example.vehicles_rental.exception.PaymentFailed;
 import org.example.vehicles_rental.exception.PaymentMethodNotFound;
 import org.example.vehicles_rental.exception.PaymentNotFound;
 import org.example.vehicles_rental.repository.BookingRepository;
 import org.example.vehicles_rental.repository.PaymentMethodRepository;
 import org.example.vehicles_rental.repository.PaymentRepository;
+import org.example.vehicles_rental.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -46,8 +55,9 @@ public class BakongPaymentService {
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
     private final PaymentMethodRepository paymentMethodRepository;
-//    @Value("${bakong.enabled:false}")
-//    private boolean bakongEnabled;
+    private final UserRepository userRepository;
+    private static final int TEST_PAYMENT_SUCCESS_DELAY_SECONDS = 10;
+
     @Value("${bakong.api.base-url}")
     private String baseUrl;
 
@@ -129,10 +139,12 @@ public class BakongPaymentService {
         info.setMerchantName(merchantName);
         info.setMerchantCity(merchantCity);
         info.setAcquiringBank(acquiringBank);
-        info.setAmount(request.getAmount().doubleValue());
+        info.setAmount(amount.doubleValue());
         info.setBillNumber(billNumber);
+        info.setExpirationTimestamp(
+                java.time.Instant.now().plusSeconds(600).toEpochMilli());
 
-        if (currency.equals("USD")) {
+        if ("USD".equals(currency)) {
             info.setCurrency(KHQRCurrency.USD);
         } else {
             info.setCurrency(KHQRCurrency.KHR);
@@ -160,8 +172,8 @@ public class BakongPaymentService {
             throw new PaymentFailed("KHQR data is null");
         }
 
-        String qr = response.getData().getQr();
-        String md5 = response.getData().getMd5();
+        return response.getData();
+    }
 
         if (qr == null || qr.isBlank()) {
             throw new PaymentFailed("Generated KHQR is empty");
@@ -185,16 +197,65 @@ public class BakongPaymentService {
                 .expiresAt(LocalDateTime.now().plusMinutes(10))
                 .build();
 
-        Payment savedPayment = paymentRepository.save(payment);
+        if (reference == null || reference.isBlank()) {
+            return BakongPaymentResponse.builder()
+                    .amount(amount)
+                    .currency(normalizedCurrency)
+                    .status(PaymentStatus.PENDING)
+                    .message("Waiting for QR reference")
+                    .build();
+        }
+
+        Map<String, Object> result = checkTransactionByMd5(reference);
+
+        if (result == null) {
+            return testQrEnabled
+                    ? buildTestPaidResponse(reference, amount, normalizedCurrency)
+                    : pendingReferenceResponse(null, reference);
+        }
+
+        Object responseCode = result.get("responseCode");
+
+        if (!isSuccessfulBakongResponse(responseCode)) {
+            return pendingReferenceResponse(
+                    null,
+                    reference,
+                    getString(result, "responseMessage"));
+        }
+
+        Object dataObject = result.get("data");
+
+        if (!(dataObject instanceof Map<?, ?> data)) {
+            return BakongPaymentResponse.builder()
+                    .amount(amount)
+                    .currency(normalizedCurrency)
+                    .md5(reference)
+                    .paidAt(LocalDateTime.now())
+                    .paymentDate(LocalDate.now())
+                    .status(PaymentStatus.PAID)
+                    .build();
+        }
+
+        String transactionHash = getString(data, "hash");
+        String transactionCurrency = Optional.ofNullable(getString(data, "currency"))
+                .orElse(normalizedCurrency);
+        BigDecimal transactionAmount = Optional.ofNullable(getAmount(data))
+                .orElse(amount);
 
         log.info(
-                "Bakong payment created: paymentId={}, bookingId={}, md5={}",
-                savedPayment.getId(),
-                booking.getId(),
-                md5
-        );
+                "Bakong test payment verified: md5={}, dataKeys={}",
+                reference,
+                data.keySet());
 
-        return toResponse(savedPayment);
+        return BakongPaymentResponse.builder()
+                .amount(transactionAmount)
+                .currency(transactionCurrency)
+                .transactionId(transactionHash)
+                .md5(reference)
+                .paidAt(LocalDateTime.now())
+                .paymentDate(LocalDate.now())
+                .status(PaymentStatus.PAID)
+                .build();
     }
 
     // CHECK BAKONG PAYMENT
@@ -215,6 +276,15 @@ public class BakongPaymentService {
             payment.setPaymentStatus(PaymentStatus.EXPIRED);
             paymentRepository.save(payment);
 
+            payment.getBooking().setStatus(
+                    org.example.vehicles_rental.enums.BookingStatus.CONFIRMED);
+            bookingRepository.save(payment.getBooking());
+
+            log.info(
+                    "Bakong QR expired: paymentId={}, bookingId={}",
+                    payment.getId(),
+                    payment.getBooking().getId());
+
             return toResponse(payment);
         }
 
@@ -227,6 +297,10 @@ public class BakongPaymentService {
         Map<String, Object> result = checkTransactionByMd5(payment.getMd5());
 
         if (result == null) {
+            if (testQrEnabled && isReadyForTestPayment(payment)) {
+                markPaymentPaid(payment, "TEST-" + payment.getMd5());
+            }
+
             return toResponse(payment);
         }
 
@@ -263,13 +337,13 @@ public class BakongPaymentService {
                 merchantAccount.equalsIgnoreCase(toAccount);
 
         log.info(
-                "Bakong verification: paymentId={}, amountMatches={}, " +
-                        "currencyMatches={}, destinationMatches={}",
-                paymentId,
+                "Bakong verification: paymentId={}, bookingId={}, " +
+                        "amountMatches={}, currencyMatches={}, destinationMatches={}",
+                payment.getId(),
+                payment.getBooking().getId(),
                 amountMatches,
                 currencyMatches,
-                destinationMatches
-        );
+                destinationMatches);
 
         // PAYMENT SUCCESS
         if (amountMatches && currencyMatches && destinationMatches) {
@@ -283,9 +357,10 @@ public class BakongPaymentService {
             paymentRepository.save(payment);
 
             log.info(
-                    "Payment verified successfully: paymentId={}",
-                    paymentId
-            );
+                    "Payment verified successfully: paymentId={}, bookingId={}, hash={}",
+                    payment.getId(),
+                    payment.getBooking().getId(),
+                    transactionHash);
         }
 
         return toResponse(payment);
@@ -294,6 +369,14 @@ public class BakongPaymentService {
     // CHECK TRANSACTION BY MD5
     private Map<String, Object> checkTransactionByMd5(String md5) {
 
+        String apiToken = normalizeApiToken(token);
+
+        if (apiToken == null || apiToken.isBlank()) {
+            return Map.of(
+                    "responseCode", "CONFIG_ERROR",
+                    "responseMessage", "Bakong API token is missing. Set BAKONG_API_TOKEN and restart backend.");
+        }
+
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(token);
@@ -301,26 +384,72 @@ public class BakongPaymentService {
 
             Map<String, String> body = Map.of("md5", md5);
 
-            HttpEntity<Map<String, String>> entity =
-                    new HttpEntity<>(body, headers);
+            HttpEntity<Map<String, String>> entity = new HttpEntity<>(body, headers);
 
-            ResponseEntity<Map> response = restTemplate.exchange(
-                    baseUrl + "/v1/check_transaction_by_md5",
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    normalizeBaseUrl(baseUrl) + "/v1/check_transaction_by_md5",
                     HttpMethod.POST,
                     entity,
-                    Map.class
-            );
-
-            if (response.getBody() == null) {
-                return null;
-            }
+                    new ParameterizedTypeReference<>() {
+                    });
 
             return response.getBody();
+
+        } catch (RestClientResponseException e) {
+
+            String message = e.getStatusCode().value() == 401
+                    ? "Bakong payment verification is unavailable. Please check Bakong API token."
+                    : "Bakong API error: " + e.getStatusCode().value();
+
+            log.debug("Bakong API error: {}", message);
+
+            return Map.of(
+                    "responseCode", "API_ERROR",
+                    "responseMessage", message);
 
         } catch (Exception e) {
             log.warn("Bakong API error: {}", e.getMessage());
             return null;
         }
+
+        String normalized = value.trim();
+
+        if (normalized.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            normalized = normalized.substring(7).trim();
+        }
+
+        return normalized.replace("\\_", "_");
+    }
+
+    private String normalizeBaseUrl(String value) {
+
+        String normalized = value == null || value.isBlank()
+                ? "https://api-bakong.nbc.gov.kh"
+                : value.trim();
+
+        while (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+
+        if (normalized.endsWith("/v1")) {
+            normalized = normalized.substring(0, normalized.length() - 3);
+        }
+
+        return normalized;
+    }
+
+    private boolean isSuccessfulBakongResponse(Object responseCode) {
+
+        if (responseCode == null) {
+            return false;
+        }
+
+        String code = responseCode.toString().trim();
+
+        return "0".equals(code)
+                || "00".equals(code)
+                || "success".equalsIgnoreCase(code)
+                || "successful".equalsIgnoreCase(code);
     }
 
     // GET STRING
@@ -339,6 +468,7 @@ public class BakongPaymentService {
 
         try {
             return new BigDecimal(value.toString());
+
         } catch (NumberFormatException e) {
             return null;
         }

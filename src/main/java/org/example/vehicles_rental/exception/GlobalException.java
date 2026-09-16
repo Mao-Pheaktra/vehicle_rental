@@ -2,44 +2,46 @@ package org.example.vehicles_rental.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Map;
 
 @RestControllerAdvice
-public class GlobalException {
-
-    // 404 NOT FOUND
-    @ExceptionHandler({
-            NotFoundException.class,
-            PaymentNotFound.class,
-            BookingNotFound.class,
-            PaymentMethodNotFound.class,
-            VehicleNotFound.class,
-            UserNotFound.class
-    })
+public class GlobalException{
+    @ExceptionHandler({NotFoundException.class, UserNotFound.class, VehicleNotFound.class})
     public ResponseEntity<?> handleNotFound(RuntimeException e) {
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of(
                         "status", 404,
                         "message", e.getMessage()
                 ));
     }
 
-    // 409 CONFLICT
-    @ExceptionHandler({
-            EmailAlreadyExists.class,
-            DuplicatePaymentMethod.class,
-            PaymentAlreadyExists.class
-    })
-    public ResponseEntity<?> handleConflict(RuntimeException e) {
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
+    @ExceptionHandler(EmaliAlreadyExists.class)
+    public ResponseEntity<?> handleEmailAlreadyExists(EmaliAlreadyExists e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of(
                         "status", 409,
                         "message", e.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<?> handleDataIntegrity(DataIntegrityViolationException e) {
+        String message = e.getMostSpecificCause() == null
+                ? e.getMessage()
+                : e.getMostSpecificCause().getMessage();
+        String responseMessage = message != null && message.toLowerCase().contains("email")
+                ? "This email is already registered"
+                : "Could not save this data. Please check that the selected item exists.";
+
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of(
+                        "status", 409,
+                        "message", responseMessage
                 ));
     }
 
@@ -62,8 +64,7 @@ public class GlobalException {
     // 401 UNAUTHORIZED
     @ExceptionHandler(IncorrectPassword.class)
     public ResponseEntity<?> handleIncorrectPassword(IncorrectPassword e) {
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of(
                         "status", 401,
                         "message", e.getMessage()
@@ -72,10 +73,8 @@ public class GlobalException {
 
     @ExceptionHandler(EmailAndPasswordNotMatch.class)
     public ResponseEntity<?> handleEmailAndPasswordNotMatch(
-            EmailAndPasswordNotMatch e
-    ) {
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
+            EmailAndPasswordNotMatch e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of(
                         "status", 401,
                         "message", e.getMessage()
@@ -84,15 +83,21 @@ public class GlobalException {
 
     @ExceptionHandler(EmailVerify.class)
     public ResponseEntity<?> handleEmailVerify(EmailVerify e) {
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of(
                         "status", 401,
                         "message", e.getMessage()
                 ));
     }
 
-    // OTP EXPIRED
+    @ExceptionHandler(InvalidOTP.class)
+    public ResponseEntity<?> handleInvalidOTP(InvalidOTP e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "status", 400,
+                        "message", e.getMessage()
+                ));
+    }
     @ExceptionHandler(OtpExpireException.class)
     public ResponseEntity<?> handleOtpExpired(OtpExpireException e) {
         return ResponseEntity
@@ -116,20 +121,44 @@ public class GlobalException {
                 ));
     }
 
-    // 500 INTERNAL SERVER ERROR
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> handleUnexpectedException(Exception e) {
-
-        e.printStackTrace();
-
+    @ExceptionHandler({BookingNotFound.class, PaymentMethodNotFound.class, PaymentNotFound.class})
+    public ResponseEntity<?> handlePaymentNotFound(RuntimeException e) {
         return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .status(HttpStatus.NOT_FOUND)
                 .body(Map.of(
-                        "status", 500,
-                        "message", e.getMessage() != null
-                                ? e.getMessage()
-                                : "An unexpected error occurred",
-                        "exception", e.getClass().getSimpleName()
+                        "status", 404,
+                        "message", e.getMessage()
                 ));
     }
+
+    @ExceptionHandler(PaymentAlreadyExists.class)
+    public ResponseEntity<?> handlePaymentAlreadyExists(PaymentAlreadyExists e) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(Map.of(
+                        "status", 409,
+                        "message", e.getMessage()
+                ));
+    }
+
+    @ExceptionHandler({IllegalArgumentException.class, InvalidBooking.class, PaymentFailed.class})
+    public ResponseEntity<?> handlePaymentBadRequest(RuntimeException e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "status", 400,
+                        "message", e.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<?> handleAccessDenied(AccessDeniedException e) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(Map.of(
+                        "status", 403,
+                        "message", e.getMessage()
+                ));
+    }
+
 }

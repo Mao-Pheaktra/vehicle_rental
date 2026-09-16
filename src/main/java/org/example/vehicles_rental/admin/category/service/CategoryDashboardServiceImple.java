@@ -2,8 +2,7 @@ package org.example.vehicles_rental.admin.category.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.vehicles_rental.admin.category.dto.CategoryDashboardStatisticsResponse;
-import org.example.vehicles_rental.repository.CategoryDashboardRepository;
-import org.example.vehicles_rental.repository.CategoryRepository;
+import org.example.vehicles_rental.admin.category.repository.CategoryDashboardRepository;
 import org.springframework.stereotype.Service;
 
 @Service

@@ -15,13 +15,13 @@ import java.util.Map;
 @Data
 @RequiredArgsConstructor
 public class Cloudinaryconfig {
-    @Value("${cloudinary.cloud-name}")
+    @Value("${cloudinary.cloud-name:}")
     private String cloudName;
 
-    @Value("${cloudinary.api-key}")
+    @Value("${cloudinary.api-key:}")
     private String apiKey;
 
-    @Value("${cloudinary.api-secret}")
+    @Value("${cloudinary.api-secret:}")
     private String apiSecret;
 
     @Bean

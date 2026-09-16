@@ -12,8 +12,6 @@ import org.example.vehicles_rental.mapper.VehicleMapper;
 import org.example.vehicles_rental.repository.BrandRepository;
 import org.example.vehicles_rental.repository.CategoryRepository;
 import org.example.vehicles_rental.repository.VehicleRepository;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,9 +30,7 @@ public class VehicleServiceImpl implements VehicleService {
 
 
     @Override
-    public VehicleResponse create(VehicleRequest vehicleRequest, MultipartFile mainImage)throws IOException {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
+    public VehicleResponse create(VehicleRequest vehicleRequest) {
         Categories categories = categoryRepository
                 .findById(vehicleRequest.getCategory_id())
                 .orElseThrow(()-> new RuntimeException("Category Not Found"));
@@ -67,8 +63,6 @@ public class VehicleServiceImpl implements VehicleService {
 
     @Override
     public List<VehicleResponse> getAll() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
             List<Vehicle> vehicles = vehicleRepository.findAll();
             List<VehicleResponse> vehicleResponses = new ArrayList<>();
             for (Vehicle vehicle1 : vehicles) {
@@ -79,17 +73,13 @@ public class VehicleServiceImpl implements VehicleService {
 
     @Override
     public VehicleResponse getById(Long id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
         Vehicle vehicle = vehicleRepository.findById(id)
                 .orElseThrow(()->new NotFoundException("vehicle id " +id+ "not found."));
         return vehicleMapper.toVehicleResponse(vehicle);
     }
 
     @Override
-    public VehicleResponse update(Long id, VehicleRequest vehicleRequest, MultipartFile mainImage) throws IOException {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
+    public VehicleResponse update(Long id, VehicleRequest vehicleRequest) {
         Vehicle vehicle = vehicleRepository.findById(id)
                 .orElseThrow(()->new NotFoundException("vehicle id " +id+ "not found."));
         Categories categories = categoryRepository
@@ -121,8 +111,6 @@ public class VehicleServiceImpl implements VehicleService {
 
     @Override
     public void delete(Long id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
         Vehicle vehicle = vehicleRepository.findById(id)
                         .orElseThrow(()-> new NotFoundException("vehicle id " +id+ "not found."));
         vehicleRepository.deleteById(id);
