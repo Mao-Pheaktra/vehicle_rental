@@ -4,7 +4,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import org.example.vehicles_rental.service.ProfileService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -36,13 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         String token = authHeader.substring(7);
 
-        String email;
-        try {
-            email = jwtService.extractEmail(token);
-        } catch (JwtException | IllegalArgumentException e) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+        String email = jwtService.extractEmail(token);
 
         if (email != null &&
                 SecurityContextHolder.getContext().getAuthentication() == null) {
