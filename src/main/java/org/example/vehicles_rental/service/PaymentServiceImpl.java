@@ -30,6 +30,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
+
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
     private final PaymentMethodRepository paymentMethodRepository;
@@ -38,30 +39,47 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentResponse create(PaymentRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Payment request is required");
+        }
+        if (request.getBookingId() == null) {
+            throw new IllegalArgumentException("Booking ID is required");
+        }
+        if (request.getPaymentMethodId() == null) {
+            throw new IllegalArgumentException("Payment method ID is required");
+        }
+
         Booking booking = bookingRepository.findById(request.getBookingId())
                 .orElseThrow(() -> new BookingNotFound(request.getBookingId()));
 
-        assertCanAccessBooking(booking);
+        PaymentMethod paymentMethod = paymentMethodRepository.findById(request.getPaymentMethodId())
+                .orElseThrow(() -> new PaymentMethodNotFound(request.getPaymentMethodId()));
 
-        PaymentMethod paymentMethod = paymentMethodRepository
-                .findById(request.getPaymentMethodId())
-                        .orElseThrow(() -> new PaymentMethodNotFound(
-                                request.getPaymentMethodId()));
         if (paymentMethod.getStatus() != PaymentMethodStatus.ACTIVE) {
-            throw new IllegalArgumentException(
-                    "Payment method is currently inactive"
-            );
+            throw new IllegalArgumentException("Payment method is currently inactive");
         }
+
+        // Prevent duplicate payment
+        if (paymentRepository.existsByBookingId(request.getBookingId())) {
+            throw new PaymentAlreadyExists(request.getBookingId());
+        }
+
         Payment payment = new Payment();
         payment.setBooking(booking);
         payment.setPaymentMethod(paymentMethod);
         payment.setAmount(booking.getTotalPrice());
         payment.setPaymentStatus(PaymentStatus.PENDING);
-        payment.setPaymentDate(LocalDate.now());
+
+        // paymentDate is NOT set here.
+        // It will only be set when payment becomes PAID.
         Payment saved = paymentRepository.save(payment);
+        telegramNotificationService.notifyPaymentSuccess(booking);
+
         notificationService.notifyPaymentReceived(saved);
         return mapToResponse(saved);
     }
+
+    // GET BY ID
     @Override
     public PaymentResponse getById(Long id) {
         Payment payment = paymentRepository.findById(id)
@@ -69,6 +87,8 @@ public class PaymentServiceImpl implements PaymentService {
         assertCanAccessBooking(payment.getBooking());
         return mapToResponse(payment);
     }
+
+    // GET ALL
     @Override
     public List<PaymentResponse> getAll() {
         assertAdmin();
@@ -78,92 +98,78 @@ public class PaymentServiceImpl implements PaymentService {
                 .map(this::mapToResponse)
                 .toList();
     }
+
+    // GET BY BOOKING
     @Override
-    public PaymentResponse getByBooking(Long bookingId){
-        Payment payment = paymentRepository.findFirstByBookingIdOrderByCreatedAtDesc(bookingId).orElseThrow(
-                (() -> new PaymentNotFound("Payment not found for booking:"+ bookingId))
-        );
-        assertCanAccessBooking(payment.getBooking());
+    public PaymentResponse getByBooking(Long bookingId) {
+        Payment payment = paymentRepository.findByBookingId(bookingId)
+                .orElseThrow(() -> new PaymentNotFound(
+                        "Payment not found for booking: " + bookingId
+                ));
         return mapToResponse(payment);
     }
+
+    // UPDATE
     @Override
     public PaymentResponse update(Long id, PaymentRequest request) {
         assertAdmin();
 
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new PaymentNotFound(id));
+
+        // A PAID payment must not be changed.
+        if (payment.getPaymentStatus() == PaymentStatus.PAID) {
+            throw new PaymentFailed("Cannot update a payment that is already PAID");
+        }
+
+        // Update booking
         if (request.getBookingId() != null) {
+            // Prevent assigning this payment to another booking that already has payment.
+            if (!payment.getBooking().getId().equals(request.getBookingId())
+                    && paymentRepository.existsByBookingId(request.getBookingId())) {
+                throw new PaymentAlreadyExists(request.getBookingId());
+            }
+
             Booking booking = bookingRepository.findById(request.getBookingId())
-                            .orElseThrow(() -> new BookingNotFound(request.getBookingId()));
+                    .orElseThrow(() -> new BookingNotFound(request.getBookingId()));
+
             payment.setBooking(booking);
             payment.setAmount(booking.getTotalPrice());
         }
+
+        // Update payment method
         if (request.getPaymentMethodId() != null) {
-            PaymentMethod paymentMethod =
-                    paymentMethodRepository.findById(request.getPaymentMethodId())
-                            .orElseThrow(() -> new PaymentMethodNotFound(
-                                    request.getPaymentMethodId()));
+            PaymentMethod paymentMethod = paymentMethodRepository.findById(
+                    request.getPaymentMethodId()
+            ).orElseThrow(() -> new PaymentMethodNotFound(
+                    request.getPaymentMethodId()
+            ));
+
+            if (paymentMethod.getStatus() != PaymentMethodStatus.ACTIVE) {
+                throw new IllegalArgumentException("Payment method is currently inactive");
+            }
+
             payment.setPaymentMethod(paymentMethod);
         }
-
 
         Payment updated = paymentRepository.save(payment);
         return mapToResponse(updated);
     }
+
+    // DELETE
     @Override
     public void delete(Long id) {
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new PaymentNotFound(id));
-        assertAdmin();
+
+        if (payment.getPaymentStatus() == PaymentStatus.PAID) {
+            throw new PaymentFailed("Cannot delete a payment that is already PAID");
+        }
+
         paymentRepository.delete(payment);
     }
 
-    private void assertCanAccessBooking(Booking booking) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null ||
-                authentication instanceof AnonymousAuthenticationToken ||
-                !authentication.isAuthenticated()) {
-            throw new AccessDeniedException("Login is required to access this payment");
-        }
-
-        org.example.vehicles_rental.entity.User user = userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        if (user.getRole() == Role.ADMIN) {
-            return;
-        }
-
-        Long bookingUserId = booking.getUser() == null ? null : booking.getUser().getId();
-
-        if (bookingUserId == null || !bookingUserId.equals(user.getId())) {
-            if (booking.getStatus() == org.example.vehicles_rental.enums.BookingStatus.PENDING) {
-                booking.setUser(user);
-                bookingRepository.save(booking);
-                return;
-            }
-
-            throw new AccessDeniedException("You can only access payment for your own booking");
-        }
-    }
-
-    private void assertAdmin() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null ||
-                authentication instanceof AnonymousAuthenticationToken ||
-                !authentication.isAuthenticated()) {
-            throw new AccessDeniedException("Admin login is required");
-        }
-
-        org.example.vehicles_rental.entity.User user = userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        if (user.getRole() != Role.ADMIN) {
-            throw new AccessDeniedException("Admin access is required");
-        }
-    }
-
+    // MAPPER
     private PaymentResponse mapToResponse(Payment payment) {
         return PaymentResponse.builder()
                 .id(payment.getId())
@@ -172,6 +178,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .paymentMethodName(payment.getPaymentMethod().getPaymentMethodName())
                 .amount(payment.getAmount())
                 .transactionId(payment.getTransactionId())
+                .currency(payment.getCurrency())
                 .status(payment.getPaymentStatus())
                 .paymentDate(payment.getPaymentDate())
                 .build();

@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import org.example.vehicles_rental.enums.PaymentStatus;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data

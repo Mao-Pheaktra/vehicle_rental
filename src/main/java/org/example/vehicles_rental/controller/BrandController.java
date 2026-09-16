@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/brand")
+@RequestMapping("/api/brands")
 public class BrandController {
     private final BrandService brandService;
     @PostMapping("/create")
@@ -28,8 +28,8 @@ public class BrandController {
     public ApiResponse<BrandResponse> getById(@PathVariable Long id){
         return new ApiResponse<>("get By Id Successfully",200,brandService.getById(id));
     }
-    @PutMapping("update/{id}")
-    public ApiResponse<BrandResponse> update(@PathVariable Long id, @ModelAttribute BrandRequest brandRequest,@RequestParam("file") MultipartFile file)throws IOException {
+    @PutMapping(value ="update/{id}", consumes = "multipart/form-data")
+    public ApiResponse<BrandResponse> update(@PathVariable Long id, @ModelAttribute BrandRequest brandRequest,@RequestParam( value ="file", required = false) MultipartFile file)throws IOException {
         return new ApiResponse<>("update brand successfully",201,brandService.update(id,brandRequest,file));
     }
     @DeleteMapping("delete/{id}")

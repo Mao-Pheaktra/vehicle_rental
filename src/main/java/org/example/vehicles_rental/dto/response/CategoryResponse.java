@@ -4,18 +4,20 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.vehicles_rental.enums.CategoryStatus;
 
 import java.time.LocalDateTime;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class CategoryResponse {
     private Long id;
-    private String category_name;
+    private String name;
     private String description;
-    private LocalDateTime  created_at;
-    private LocalDateTime updated_at;
-
+    private CategoryStatus status;
+    private Integer vehicleCount;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

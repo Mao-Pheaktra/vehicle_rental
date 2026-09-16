@@ -34,6 +34,7 @@ public class BookingServiceImpl implements BookingService {
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
     private final NotificationService notificationService;
+    private final TelegramNotificationService telegramNotificationService;
 
     @Override
     public BookingResponse create(BookingRequest request) {
@@ -79,6 +80,8 @@ public class BookingServiceImpl implements BookingService {
         }
 
         return mapToResponse(saved);
+
+       
     }
     @Override
     public BookingResponse getById(Long id) {
@@ -177,6 +180,7 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new BookingNotFound(id));
         bookingRepository.delete(booking);
     }
+    
     private BookingResponse mapToResponse(Booking booking) {
         return new BookingResponse(
                 booking.getId(),

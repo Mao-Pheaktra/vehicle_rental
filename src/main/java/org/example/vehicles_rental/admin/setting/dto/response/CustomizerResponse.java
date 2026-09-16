@@ -17,6 +17,8 @@ public class CustomizerResponse {
 
     private String logo;
 
+    private String websiteName;
+
     private String heroImage;
 
     private String title;

@@ -4,73 +4,86 @@ import lombok.RequiredArgsConstructor;
 import org.example.vehicles_rental.dto.request.CategoryRequest;
 import org.example.vehicles_rental.dto.response.CategoryResponse;
 import org.example.vehicles_rental.entity.Categories;
+import org.example.vehicles_rental.enums.CategoryStatus;
 import org.example.vehicles_rental.exception.NotFoundException;
-import org.example.vehicles_rental.mapper.CategoryMapper;
 import org.example.vehicles_rental.repository.CategoryRepository;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
+
     private final CategoryRepository categoryRepository;
-    private final CategoryMapper  categoryMapper;
+
     @Override
     public CategoryResponse create(CategoryRequest categoryRequest) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
         Categories categories = Categories.builder()
-                .category_name(categoryRequest.getCategory_name())
+                .categoryName(categoryRequest.getName())
                 .description(categoryRequest.getDescription())
+                .status(categoryRequest.getStatus() != null ? categoryRequest.getStatus() : CategoryStatus.ACTIVE)
                 .build();
+
         Categories savedCategories = categoryRepository.save(categories);
-        return categoryMapper.tocategoryResponse(savedCategories);
+        return mapToCategoryResponse(savedCategories);
     }
 
     @Override
     public List<CategoryResponse> getAll() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
         List<Categories> categories = categoryRepository.findAll();
-        List<CategoryResponse> categoryResponses = new ArrayList<>();
-        for (Categories category : categories) {
-          categoryResponses.add(categoryMapper.tocategoryResponse(category));
-        }
-        return categoryResponses;
+        return categories.stream()
+                .map(this::mapToCategoryResponse)
+                .toList();
     }
 
     @Override
     public CategoryResponse getById(Long id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
         Categories categories = categoryRepository.findById(id)
-                .orElseThrow(()->new NotFoundException("Category Id " +id+ " Not Found"));
-        return categoryMapper.tocategoryResponse(categories);
+                .orElseThrow(() -> new NotFoundException("Category Id " + id + " Not Found"));
+        return mapToCategoryResponse(categories);
     }
 
     @Override
-    public CategoryResponse update(Long id,CategoryRequest categoryRequest) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
+    public CategoryResponse update(Long id, CategoryRequest categoryRequest) {
         Categories categories = categoryRepository.findById(id)
-                .orElseThrow(()->new NotFoundException("Category Id " +id+ " Not Found"));
-        categories.setCategory_name(categoryRequest.getCategory_name());
-        categories.setDescription(categoryRequest.getDescription());
-        categoryRepository.save(categories);
-        return categoryMapper.tocategoryResponse(categories);
+                .orElseThrow(() -> new NotFoundException("Category Id " + id + " Not Found"));
 
+        if (categoryRequest.getName() != null && !categoryRequest.getName().isBlank()) {
+            categories.setCategoryName(categoryRequest.getName());
+        }
+
+        if (categoryRequest.getDescription() != null) {
+            categories.setDescription(categoryRequest.getDescription());
+        }
+
+        if (categoryRequest.getStatus() != null) {
+            categories.setStatus(categoryRequest.getStatus());
+        }
+
+        Categories updatedCategory = categoryRepository.save(categories);
+        return mapToCategoryResponse(updatedCategory);
     }
 
     @Override
     public void delete(Long id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
         Categories categories = categoryRepository.findById(id)
-                .orElseThrow(()->new NotFoundException("Category Id " +id+ " Not Found"));
-        categoryRepository.deleteById(categories.getId());
+                .orElseThrow(() -> new NotFoundException("Category Id " + id + " Not Found"));
+        categoryRepository.delete(categories);
+    }
+
+    /* Mapper Helper */
+    private CategoryResponse mapToCategoryResponse(Categories category) {
+        int vehicleCount = (category.getVehicles() != null) ? category.getVehicles().size() : 0;
+
+        return CategoryResponse.builder()
+                .id(category.getId())
+                .name(category.getCategoryName())
+                .description(category.getDescription())
+                .status(category.getStatus() != null ? category.getStatus() : CategoryStatus.ACTIVE)
+                .vehicleCount(vehicleCount)
+                .createdAt(category.getCreatedAt())
+                .updatedAt(category.getUpdatedAt())
+                .build();
     }
 }

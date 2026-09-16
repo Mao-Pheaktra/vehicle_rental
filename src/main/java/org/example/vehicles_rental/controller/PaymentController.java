@@ -59,8 +59,8 @@ public class PaymentController {
         return ResponseEntity.ok(
                 new ApiResponse<>("Payment deleted successfully",200, null));
     }
-    @PostMapping("/bakong/qr")
-    public ResponseEntity<BakongPaymentResponse> createBakongQr(
+    @PostMapping("/bakong/create")
+    public ResponseEntity<BakongPaymentResponse> createBakongPayment(
             @Valid @RequestBody CreatePaymentRequest request) {
 
         return ResponseEntity.ok(

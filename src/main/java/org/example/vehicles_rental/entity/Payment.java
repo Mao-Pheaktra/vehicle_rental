@@ -5,12 +5,24 @@ import lombok.*;
 import org.example.vehicles_rental.enums.PaymentStatus;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "payments")
-@Data
+@Table(
+        name = "payments",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_payment_bakong_md5",
+                        columnNames = "md5"
+                ),
+                @UniqueConstraint(
+                        name = "uk_payment_bakong_transaction_hash",
+                        columnNames = "bakong_transaction_hash"
+                )
+        }
+)
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -28,59 +40,48 @@ public class Payment {
     @JoinColumn(name = "payment_method_id", nullable = false)
     private PaymentMethod paymentMethod;
 
-    @Column(
-            name = "amount",
-            precision = 10,
-            scale = 2,
-            nullable = false
-    )
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @Column(name = "transaction_id")
+    @Column(length = 100)
     private String transactionId;
 
-    @Column(name = "bakong_account")
+    @Column(length = 100)
     private String bakongAccount;
 
-    @Column(name = "currency", length = 3)
+    @Column(length = 10)
     private String currency;
 
-    @Column(name = "qr", length = 2000)
+    @Column(length = 2000)
     private String qr;
 
-    @Column(name = "md5", length = 32)
+    @Column(length = 100, unique = true)
     private String md5;
 
-    @Column(name = "bakong_transaction_hash")
+    @Column(name = "bakong_transaction_hash", length = 255, unique = true)
     private String bakongTransactionHash;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_status")
+    @Column(nullable = false)
     private PaymentStatus paymentStatus;
 
-    @Column(name = "payment_date")
-    private LocalDate paymentDate;
+    private LocalDateTime paymentDate;
 
-    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
-    @Column(name = "paid_at")
     private LocalDateTime paidAt;
 
     @PrePersist
     protected void onCreate() {
 
-        this.createdAt = LocalDateTime.now();
-
-        if (this.paymentStatus == null) {
-            this.paymentStatus = PaymentStatus.PENDING;
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
         }
 
-        if (this.paymentDate == null) {
-            this.paymentDate = LocalDate.now();
+        if (paymentStatus == null) {
+            paymentStatus = PaymentStatus.PENDING;
         }
     }
 }

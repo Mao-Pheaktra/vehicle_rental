@@ -17,6 +17,7 @@ public class VehicleRequest {
     private Long category_id;
     private Long brand_id;
     private String name;
+    private String mainImage;
     private String model;
     private Integer year;
     private String plate_number;

@@ -42,7 +42,7 @@ public class PasswordResetServiceImpl implements PasswordResetService{
         resetToken.setExpiryDate(LocalDateTime.now().plusMinutes(10));
         passwordResetTokenRepository.save(resetToken);
 
-        String resetLink = "http://localhost:5173/reset-password?token=" +token;
+        String resetLink = "http://localhost:5173/auth/reset-password?token=" +token;
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);

@@ -6,12 +6,16 @@ import org.example.vehicles_rental.admin.setting.dto.response.CustomizerResponse
 import org.example.vehicles_rental.admin.setting.entity.Customizer;
 import org.example.vehicles_rental.admin.setting.repository.CustomizerRepository;
 import org.example.vehicles_rental.entity.User;
-import org.example.vehicles_rental.exception.NotFoundException;
 import org.example.vehicles_rental.repository.UserRepository;
+import org.example.vehicles_rental.service.CloudinaryService;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 
 @Service
@@ -20,65 +24,94 @@ public class CustomizerServiceImpl implements CustomizerService {
 
     private final CustomizerRepository repository;
     private final UserRepository userRepository;
+    private final CloudinaryService cloudinaryService;
 
     @Override
+    @Transactional(readOnly = true)
     public CustomizerResponse getSettings() {
-
         Customizer customizer = repository.findById(1L)
-                .orElseThrow(() ->
-                        new NotFoundException(
-                                "Customizer settings not found"
-                        )
+                .orElseGet(() -> Customizer.builder()
+                        .id(1L)
+                        .websiteName("ChaulTv")
+                        .title("Precision Auto")
+                        .description("Default description")
+                        .buttonText("Explore Fleet")
+                        .buttonLink("/vehicles")
+                        .build()
                 );
 
         return mapToResponse(customizer);
     }
 
     @Override
-    public CustomizerResponse updateSettings(
-            CustomizerRequest request) {
+    @Transactional
+    public CustomizerResponse updateSettings(CustomizerRequest customizerRequest, MultipartFile logoFile, MultipartFile heroImageFile) {
 
         Customizer customizer = repository.findById(1L)
-                .orElseGet(Customizer::new);
+                .orElseGet(() -> Customizer.builder().id(1L).build());
 
-        Authentication authentication =
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication();
+        // 1. Resolve Admin User safely
+        Long adminId = getCurrentAdminId();
 
-        String email = authentication.getName();
+        try {
 
-        User admin = userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new NotFoundException(
-                                "Admin not found"
-                        )
-                );
+            // 2. Handle Logo Upload & Update
+            if (logoFile != null && !logoFile.isEmpty()) {
+                String imageUrl = cloudinaryService.uploadCustomizerLogo(logoFile);
+                customizer.setLogo(imageUrl);
+            } else if (customizerRequest != null) {
+                // Allows clearing or updating to string URL
+                customizer.setLogo(customizerRequest.getLogo());
+            }
 
-        customizer.setLogo(request.getLogo());
-        customizer.setHeroImage(request.getHeroImage());
-        customizer.setTitle(request.getTitle());
-        customizer.setDescription(request.getDescription());
-        customizer.setButtonText(request.getButtonText());
-        customizer.setButtonLink(request.getButtonLink());
+            // 3. Handle Hero Image Upload & Update
+            if (heroImageFile != null && !heroImageFile.isEmpty()) {
+                String imageUrl = cloudinaryService.uploadCustomizerHeroImage(heroImageFile);
+                customizer.setHeroImage(imageUrl);
+            } else if (customizerRequest != null) {
+                // Allows clearing or updating to string URL
+                customizer.setHeroImage(customizerRequest.getHeroImage());
+            }
 
-        customizer.setUpdatedBy(admin.getId());
-        customizer.setUpdatedAt(LocalDateTime.now());
+            // 4. Update Text Fields
+            if (customizerRequest != null) {
+                customizer.setWebsiteName(customizerRequest.getWebsiteName());
+                customizer.setTitle(customizerRequest.getTitle());
+                customizer.setDescription(customizerRequest.getDescription());
+                customizer.setButtonText(customizerRequest.getButtonText());
+                customizer.setButtonLink(customizerRequest.getButtonLink());
+            }
 
-        Customizer saved = repository.save(customizer);
+            // 5. Audit Metadata
+            if (adminId != null) {
+                customizer.setUpdatedBy(adminId);
+            }
+            customizer.setUpdatedAt(LocalDateTime.now());
 
-        return mapToResponse(saved);
+            Customizer saved = repository.save(customizer);
+            return mapToResponse(saved);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload image to Cloudinary: " + e.getMessage(), e);
+        }
     }
 
-    private CustomizerResponse mapToResponse(
-            Customizer customizer) {
+    private Long getCurrentAdminId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken)) {
+            String principalName = authentication.getName();
+            return userRepository.findByEmail(principalName)
+                    .map(User::getId)
+                    .orElse(null);
+        }
+        return null;
+    }
 
+    private CustomizerResponse mapToResponse(Customizer customizer) {
         String updatedByName = null;
 
         if (customizer.getUpdatedBy() != null) {
-
-            updatedByName = userRepository
-                    .findById(customizer.getUpdatedBy())
+            updatedByName = userRepository.findById(customizer.getUpdatedBy())
                     .map(User::getName)
                     .orElse(null);
         }
@@ -86,6 +119,7 @@ public class CustomizerServiceImpl implements CustomizerService {
         return CustomizerResponse.builder()
                 .id(customizer.getId())
                 .logo(customizer.getLogo())
+                .websiteName(customizer.getWebsiteName())
                 .heroImage(customizer.getHeroImage())
                 .title(customizer.getTitle())
                 .description(customizer.getDescription())

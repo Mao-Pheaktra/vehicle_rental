@@ -3,7 +3,6 @@ package org.example.vehicles_rental.service;
 import com.cloudinary.Cloudinary;
 import lombok.RequiredArgsConstructor;
 import org.example.vehicles_rental.dto.request.Vehicle_imageRequest;
-import org.example.vehicles_rental.dto.response.VehicleResponse;
 import org.example.vehicles_rental.dto.response.Vehicle_imageResponse;
 import org.example.vehicles_rental.entity.Vehicle;
 import org.example.vehicles_rental.entity.Vehicle_Image;
@@ -17,12 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+
 
 @Service
 @RequiredArgsConstructor
@@ -31,22 +27,32 @@ public class Vehicle_ImageServiceImpl implements Vehicle_ImageService {
     private final Vehicle_ImageMapper  vehicle_ImageMapper;
     private final VehicleRepository  vehicleRepository;
     private final CloudinaryService cloudinaryService;
-    private final Cloudinary cloudinary;
 
     @Override
-    public Vehicle_imageResponse create(Vehicle_imageRequest vehicle_imageRequest, MultipartFile image)throws IOException {
-       String fileUrl = null;
-       if (image != null && !image.isEmpty()){
-           fileUrl = cloudinaryService.uploadVehicleImage(image);
-       }
+    public Vehicle_imageResponse create(
+            Vehicle_imageRequest vehicle_imageRequest,
+            MultipartFile image
+    ) throws IOException {
+
+        String fileUrl = null;
+
+        if (image != null && !image.isEmpty()) {
+            fileUrl = cloudinaryService.uploadVehicleImage(image);
+        }
+
         Vehicle vehicle = vehicleRepository
                 .findById(vehicle_imageRequest.getVehicle_id())
-                .orElseThrow(()->new RuntimeException("vehicle id not found."));
+                .orElseThrow(() ->
+                        new RuntimeException("Vehicle id not found.")
+                );
+        
         Vehicle_Image vehicle_image = Vehicle_Image.builder()
                 .vehicle(vehicle)
                 .image(fileUrl)
                 .build();
+
         vehicle_imageRepository.save(vehicle_image);
+
         return vehicle_ImageMapper.toVehicleImageResponse(vehicle_image);
     }
 

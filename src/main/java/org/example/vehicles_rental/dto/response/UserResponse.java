@@ -20,4 +20,5 @@ public class UserResponse {
     private String profileImage;
     private Role role;
     private Boolean isActive;
+    private String telegramChatId;
 }

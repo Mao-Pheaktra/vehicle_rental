@@ -2,6 +2,7 @@ package org.example.vehicles_rental.controller;
 
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.vehicles_rental.dto.request.*;
 import org.example.vehicles_rental.dto.response.ApiResponse;
@@ -22,6 +23,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.view.RedirectView;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
@@ -78,23 +83,20 @@ public class AuthController {
     }
 
     @GetMapping("/google")
-    public ApiResponse<String> googleLogin() {
+    public void googleLogin(HttpServletResponse response) throws IOException {
 
         String googleUrl =
                 "https://accounts.google.com/o/oauth2/v2/auth" +
                         "?client_id=" + clientId +
-                        "&redirect_uri=" + redirectUri +
+                        "&redirect_uri=http://localhost:8080/api/auth/google/callback" +
                         "&response_type=code" +
                         "&scope=openid%20profile%20email" +
                         "&access_type=offline" +
                         "&prompt=select_account";
 
-        return new ApiResponse<>(
-                "Google login URL generated successfully",
-                200,
-                googleUrl
-        );
+        response.sendRedirect(googleUrl);
     }
+
 
     @GetMapping("/google/callback")
     public RedirectView googleCallback(

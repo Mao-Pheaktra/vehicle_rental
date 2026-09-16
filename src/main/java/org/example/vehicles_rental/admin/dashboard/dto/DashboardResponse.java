@@ -14,11 +14,14 @@ import java.util.List;
 @NoArgsConstructor
 public class DashboardResponse {
     private Long totalUser;
+    private BigDecimal userGrowthPercentage;
+    private Long pendingBooking;
     private Long totalVehicle;
     private Long availableVehicle;
     private Long activeBooking;
 
     private BigDecimal monthlyRevenue;
+    private BigDecimal revenueGrowthPercentage;
 
     private List<RevenueResponse> revenueResponses;
     private List<BookingStatisticResponse> bookingStatisticResponses;

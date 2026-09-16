@@ -32,8 +32,8 @@ public class UserController {
     public UserResponse delete(@PathVariable Long id){
         return  userService.delete(id);
     }
-    @PutMapping("/update/{id}")
-    public UserResponse update(@PathVariable Long id, @ModelAttribute UserRequest userRequest, @RequestParam("file") MultipartFile file) throws IOException{
+    @PutMapping(value = "/update/{id}",consumes = {"multipart/form-data"})
+    public UserResponse update(@PathVariable Long id, @ModelAttribute UserRequest userRequest, @RequestParam(value = "file", required = false) MultipartFile file) throws IOException{
         return userService.update(id,userRequest,file
         );
     }

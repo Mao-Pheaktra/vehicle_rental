@@ -8,7 +8,7 @@ import org.example.vehicles_rental.enums.PaymentMethodName;
 import org.example.vehicles_rental.enums.PaymentStatus;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -23,5 +23,5 @@ public class PaymentResponse {
     private String transactionId;
     private String currency;
     private PaymentStatus status;
-    private LocalDate paymentDate;
+    private LocalDateTime paymentDate;
 }

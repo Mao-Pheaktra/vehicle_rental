@@ -45,6 +45,23 @@ public class GlobalException{
                 ));
     }
 
+    // 400 BAD REQUEST
+    @ExceptionHandler({
+            IllegalArgumentException.class,
+            InvalidOTP.class,
+            PaymentFailed.class,
+            InvalidBooking.class
+    })
+    public ResponseEntity<?> handleBadRequest(RuntimeException e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "status", 400,
+                        "message", e.getMessage()
+                ));
+    }
+
+    // 401 UNAUTHORIZED
     @ExceptionHandler(IncorrectPassword.class)
     public ResponseEntity<?> handleIncorrectPassword(IncorrectPassword e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -82,19 +99,26 @@ public class GlobalException{
                 ));
     }
     @ExceptionHandler(OtpExpireException.class)
-    public ResponseEntity<?> handleOtpExpired(OtpExpireException ex) {
+    public ResponseEntity<?> handleOtpExpired(OtpExpireException e) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of(
                         "status", 400,
-                        "message", ex.getMessage()
+                        "message", e.getMessage()
                 ));
     }
+
+    // 429 TOO MANY REQUESTS
     @ExceptionHandler(TooManyRequestException.class)
-    public ResponseEntity<?> handleTooManyRequest(TooManyRequestException e) {
+    public ResponseEntity<?> handleTooManyRequest(
+            TooManyRequestException e
+    ) {
         return ResponseEntity
                 .status(HttpStatus.TOO_MANY_REQUESTS)
-                .body(e.getMessage());
+                .body(Map.of(
+                        "status", 429,
+                        "message", e.getMessage()
+                ));
     }
 
     @ExceptionHandler({BookingNotFound.class, PaymentMethodNotFound.class, PaymentNotFound.class})
