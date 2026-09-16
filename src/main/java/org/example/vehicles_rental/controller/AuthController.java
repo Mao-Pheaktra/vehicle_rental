@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @RequiredArgsConstructor
 @RestController
@@ -88,15 +90,54 @@ public class AuthController {
 
 
     @GetMapping("/google/callback")
-    public ApiResponse<LoginResponse> googleCallback(
-            @RequestParam("code") String code
-    ) {
+    public void googleCallback(
+            @RequestParam("code") String code,
+            HttpServletResponse response
+    ) throws IOException {
 
-        return new ApiResponse<>(
-                "Google login successfully",
-                200,
-                authService.googleLogin(code)
-        );
+        try {
+            LoginResponse loginResponse = authService.googleLogin(code);
+
+            String token = URLEncoder.encode(
+                    loginResponse.getToken(),
+                    StandardCharsets.UTF_8
+            );
+
+            String id = URLEncoder.encode(
+                    String.valueOf(loginResponse.getId()),
+                    StandardCharsets.UTF_8
+            );
+
+            String name = URLEncoder.encode(
+                    loginResponse.getName(),
+                    StandardCharsets.UTF_8
+            );
+
+            String email = URLEncoder.encode(
+                    loginResponse.getEmail(),
+                    StandardCharsets.UTF_8
+            );
+
+            String role = URLEncoder.encode(
+                    loginResponse.getRole().name(),
+                    StandardCharsets.UTF_8
+            );
+
+            String redirectUrl =
+                    "http://localhost:5173/auth/login" +
+                            "?token=" + token +
+                            "&id=" + id +
+                            "&name=" + name +
+                            "&email=" + email +
+                            "&role=" + role;
+
+            response.sendRedirect(redirectUrl);
+
+        } catch (Exception e) {
+            response.sendRedirect(
+                    "http://localhost:5173/auth/login?error=google_login_failed"
+            );
+        }
     }
 
 }
