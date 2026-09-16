@@ -9,22 +9,15 @@ import org.example.vehicles_rental.entity.Payment;
 import org.example.vehicles_rental.entity.PaymentMethod;
 import org.example.vehicles_rental.enums.PaymentMethodStatus;
 import org.example.vehicles_rental.enums.PaymentStatus;
-import org.example.vehicles_rental.enums.Role;
 import org.example.vehicles_rental.exception.BookingNotFound;
-import org.example.vehicles_rental.exception.NotFoundException;
+import org.example.vehicles_rental.exception.PaymentAlreadyExists;
+import org.example.vehicles_rental.exception.PaymentFailed;
 import org.example.vehicles_rental.exception.PaymentMethodNotFound;
 import org.example.vehicles_rental.exception.PaymentNotFound;
 import org.example.vehicles_rental.repository.BookingRepository;
 import org.example.vehicles_rental.repository.PaymentMethodRepository;
 import org.example.vehicles_rental.repository.PaymentRepository;
-import org.example.vehicles_rental.repository.UserRepository;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -34,9 +27,10 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
     private final PaymentMethodRepository paymentMethodRepository;
-    private final NotificationService  notificationService;
-    private final UserRepository userRepository;
+    private final NotificationService notificationService;
+    private final TelegramNotificationService telegramNotificationService;
 
+    // CREATE PAYMENT
     @Override
     public PaymentResponse create(PaymentRequest request) {
         if (request == null) {
@@ -84,15 +78,12 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentResponse getById(Long id) {
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new PaymentNotFound(id));
-        assertCanAccessBooking(payment.getBooking());
         return mapToResponse(payment);
     }
 
     // GET ALL
     @Override
     public List<PaymentResponse> getAll() {
-        assertAdmin();
-
         return paymentRepository.findAll()
                 .stream()
                 .map(this::mapToResponse)
@@ -112,8 +103,6 @@ public class PaymentServiceImpl implements PaymentService {
     // UPDATE
     @Override
     public PaymentResponse update(Long id, PaymentRequest request) {
-        assertAdmin();
-
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new PaymentNotFound(id));
 
