@@ -5,6 +5,5 @@ public enum PaymentMethodName {
     ABA_PAY,
     BAKONG,
     ACLEDA,
-    VISA,
-    MASTER_CARD
+
 }

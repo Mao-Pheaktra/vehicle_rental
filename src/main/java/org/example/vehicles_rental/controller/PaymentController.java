@@ -18,25 +18,52 @@ import java.util.List;
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
 public class PaymentController {
+
     private final PaymentService paymentService;
     private final BakongPaymentService bakongPaymentService;
+
+    // =========================
+    // Normal Payment
+    // =========================
+
     @PostMapping
     public ResponseEntity<ApiResponse<PaymentResponse>> create(
             @RequestBody PaymentRequest request) {
+
         return ResponseEntity.ok(
-                new ApiResponse<>("Payment created successfully", 201,paymentService.create(request)));
+                new ApiResponse<>(
+                        "Payment created successfully",
+                        201,
+                        paymentService.create(request)
+                )
+        );
     }
+
     @GetMapping
     public ResponseEntity<ApiResponse<List<PaymentResponse>>> getAll() {
+
         return ResponseEntity.ok(
-                new ApiResponse<>("Payments retrieved successfully",200, paymentService.getAll()));
+                new ApiResponse<>(
+                        "Payments retrieved successfully",
+                        200,
+                        paymentService.getAll()
+                )
+        );
     }
+
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<PaymentResponse>> getById(
             @PathVariable Long id) {
+
         return ResponseEntity.ok(
-                new ApiResponse<>("Payment retrieved successfully",200, paymentService.getById(id)));
+                new ApiResponse<>(
+                        "Payment retrieved successfully",
+                        200,
+                        paymentService.getById(id)
+                )
+        );
     }
+
     @GetMapping("/booking/{bookingId}")
     public ResponseEntity<PaymentResponse> getByBooking(
             @PathVariable Long bookingId) {
@@ -45,20 +72,50 @@ public class PaymentController {
                 paymentService.getByBooking(bookingId)
         );
     }
+
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<PaymentResponse>> update(
             @PathVariable Long id,
             @RequestBody PaymentRequest request) {
+
         return ResponseEntity.ok(
-                new ApiResponse<>("Payment updated successfully", 200,paymentService.update(id, request)));
+                new ApiResponse<>(
+                        "Payment updated successfully",
+                        200,
+                        paymentService.update(id, request)
+                )
+        );
     }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<String>> delete(
             @PathVariable Long id) {
+
         paymentService.delete(id);
+
         return ResponseEntity.ok(
-                new ApiResponse<>("Payment deleted successfully",200, null));
+                new ApiResponse<>(
+                        "Payment deleted successfully",
+                        200,
+                        null
+                )
+        );
     }
+
+
+    // =========================
+    // Bakong Payment
+    // =========================
+
+    @PostMapping("/bakong/qr")
+    public ResponseEntity<BakongPaymentResponse> createBakongQr(
+            @Valid @RequestBody CreatePaymentRequest request) {
+
+        return ResponseEntity.ok(
+                bakongPaymentService.createPayment(request)
+        );
+    }
+
     @PostMapping("/bakong/create")
     public ResponseEntity<BakongPaymentResponse> createBakongPayment(
             @Valid @RequestBody CreatePaymentRequest request) {
@@ -86,35 +143,12 @@ public class PaymentController {
         );
     }
 
-    @GetMapping("/bakong/status/{bookingId}")
+    @GetMapping("/bakong/{paymentId}/status")
     public ResponseEntity<BakongPaymentResponse> checkBakongPayment(
-            @PathVariable Long bookingId,
-            @RequestParam(required = false) String reference) {
+            @PathVariable Long paymentId) {
 
         return ResponseEntity.ok(
-                bakongPaymentService.checkPaymentByBooking(bookingId, reference)
-        );
-    }
-
-    @GetMapping("/bakong/test-status")
-    public ResponseEntity<BakongPaymentResponse> checkBakongTestPayment(
-            @RequestParam(required = false) String reference,
-            @RequestParam java.math.BigDecimal amount,
-            @RequestParam(defaultValue = "USD") String currency) {
-
-        return ResponseEntity.ok(
-                bakongPaymentService.checkTestPayment(reference, amount, currency)
-        );
-    }
-
-    @GetMapping("/bakong/scan-status")
-    public ResponseEntity<BakongPaymentResponse> checkBakongScanPayment(
-            @RequestParam(required = false) String reference,
-            @RequestParam java.math.BigDecimal amount,
-            @RequestParam(defaultValue = "USD") String currency) {
-
-        return ResponseEntity.ok(
-                bakongPaymentService.checkScanPayment(reference, amount, currency)
+                bakongPaymentService.checkPayment(paymentId)
         );
     }
 }

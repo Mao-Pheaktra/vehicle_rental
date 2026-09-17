@@ -24,6 +24,6 @@ public class BakongPaymentResponse {
     private LocalDateTime expiresAt;
     private LocalDateTime paidAt;
     private PaymentStatus status;
-    private LocalDate paymentDate;
+    private LocalDateTime paymentDate;
     private String message;
 }
