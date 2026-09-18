@@ -144,6 +144,16 @@ public class SecurityConfig {
                         // CHANGE PASSWORD - USER + ADMIN
                         .requestMatchers(HttpMethod.POST, "/api/request_pwd/change").authenticated()
 
+                                // FAVORITES - CLIENT + ADMIN
+                                .requestMatchers(HttpMethod.POST, "/api/favorites/**")
+                                .hasAnyRole("CLIENT", "ADMIN")
+
+                                .requestMatchers(HttpMethod.DELETE, "/api/favorites/**")
+                                .hasAnyRole("CLIENT", "ADMIN")
+
+                                .requestMatchers(HttpMethod.GET, "/api/favorites/**")
+                                .hasAnyRole("CLIENT", "ADMIN")
+
                         // ADMIN REQUEST - ADMIN
                         .requestMatchers("/api/admin/request/**").hasRole("ADMIN")
 
