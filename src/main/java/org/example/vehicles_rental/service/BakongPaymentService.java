@@ -131,6 +131,10 @@ public class BakongPaymentService {
         info.setAcquiringBank(acquiringBank);
         info.setAmount(request.getAmount().doubleValue());
         info.setBillNumber(billNumber);
+        long expirationTimestamp =
+                System.currentTimeMillis() + (10 * 60 * 1000L);
+
+        info.setExpirationTimestamp(expirationTimestamp);
 
         if (currency.equals("USD")) {
             info.setCurrency(KHQRCurrency.USD);
@@ -404,6 +408,10 @@ public class BakongPaymentService {
         info.setAcquiringBank(acquiringBank);
         info.setAmount(request.getAmount().doubleValue());
         info.setBillNumber(billNumber);
+        long expirationTimestamp =
+                System.currentTimeMillis() + (10 * 60 * 1000L);
+
+        info.setExpirationTimestamp(expirationTimestamp);
 
         if (currency.equals("USD")) {
             info.setCurrency(KHQRCurrency.USD);
@@ -552,6 +560,12 @@ public class BakongPaymentService {
             info.setAcquiringBank(acquiringBank);
             info.setAmount(request.getAmount().doubleValue());
             info.setBillNumber(billNumber);
+
+// KHQR expires after 10 minutes
+            long expirationTimestamp =
+                    System.currentTimeMillis() + (10 * 60 * 1000L);
+
+            info.setExpirationTimestamp(expirationTimestamp);
 
             if (currency.equals("USD")) {
                 info.setCurrency(KHQRCurrency.USD);

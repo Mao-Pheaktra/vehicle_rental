@@ -185,4 +185,12 @@ public class BookingServiceImpl implements BookingService {
                 booking.getStatus()
         );
     }
+    @Override
+    public List<BookingResponse> getMyBookings(Long userId) {
+
+        return bookingRepository.findByUserId(userId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
 }

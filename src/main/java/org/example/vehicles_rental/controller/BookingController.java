@@ -4,8 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.example.vehicles_rental.dto.request.BookingRequest;
 import org.example.vehicles_rental.dto.response.ApiResponse;
 import org.example.vehicles_rental.dto.response.BookingResponse;
+import org.example.vehicles_rental.entity.User;
+import org.example.vehicles_rental.repository.UserRepository;
 import org.example.vehicles_rental.service.BookingService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,6 +18,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BookingController {
     private final BookingService bookingService;
+    private final UserRepository userRepository;
+
     @PostMapping
     public ResponseEntity<ApiResponse<BookingResponse>> create(
             @RequestBody BookingRequest request) {
@@ -25,6 +30,25 @@ public class BookingController {
     public ResponseEntity<ApiResponse<List<BookingResponse>>> getAll() {
         return ResponseEntity.ok(
                 new ApiResponse<>("Bookings retrieved successfully",200, bookingService.getAll()));
+    }
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<List<BookingResponse>>> getMyBookings(
+            Authentication authentication) {
+
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Long userId = user.getId();
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        "My bookings retrieved successfully",
+                        200,
+                        bookingService.getMyBookings(userId)
+                )
+        );
     }
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<BookingResponse>> getById(
@@ -46,4 +70,5 @@ public class BookingController {
         return ResponseEntity.ok(
                 new ApiResponse<>("Booking deleted successfully",200, null));
     }
+
 }
