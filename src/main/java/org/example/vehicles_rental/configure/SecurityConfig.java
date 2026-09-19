@@ -66,7 +66,7 @@ public class SecurityConfig {
                         // BOOKINGS - ADMIN
                         .requestMatchers(HttpMethod.GET, "/api/bookings/**").hasAnyRole("CLIENT", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/bookings/**").hasAnyRole("CLIENT", "ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/bookings/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/bookings/**").hasAnyRole("CLIENT", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/bookings/**").hasRole("ADMIN")
 
                         // BAKONG PAYMENT - USER + ADMIN

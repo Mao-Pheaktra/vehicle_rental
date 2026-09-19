@@ -6,13 +6,38 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class VehicleMapper {
+
     public VehicleResponse toVehicleResponse(Vehicle vehicle) {
-       return VehicleResponse.builder()
+
+        return VehicleResponse.builder()
                 .id(vehicle.getId())
-                .category_name(vehicle.getCategory().getCategoryName())
-                .brand_name(vehicle.getBrand().getBrandName())
+
+                // Category
+                .category_id(
+                        vehicle.getCategory() != null
+                                ? vehicle.getCategory().getId()
+                                : null
+                )
+                .category_name(
+                        vehicle.getCategory() != null
+                                ? vehicle.getCategory().getCategoryName()
+                                : null
+                )
+
+                // Brand
+                .brand_id(
+                        vehicle.getBrand() != null
+                                ? vehicle.getBrand().getId()
+                                : null
+                )
+                .brand_name(
+                        vehicle.getBrand() != null
+                                ? vehicle.getBrand().getBrandName()
+                                : null
+                )
+
                 .name(vehicle.getName())
-               .mainImage(vehicle.getMainImage())
+                .mainImage(vehicle.getMainImage())
                 .model(vehicle.getModel())
                 .year(vehicle.getYear())
                 .plate_number(vehicle.getPlate_number())

@@ -16,7 +16,10 @@ import java.util.List;
 @AllArgsConstructor
 public class VehicleResponse {
     private Long id;
+    private Long category_id;
     private String category_name;
+
+    private Long brand_id;
     private String brand_name;
     private String name;
     private String mainImage;

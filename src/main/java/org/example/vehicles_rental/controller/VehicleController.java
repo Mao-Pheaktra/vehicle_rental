@@ -28,8 +28,8 @@ public class VehicleController {
     public ApiResponse<VehicleResponse> getById(@PathVariable Long id){
         return new ApiResponse<>("get vehicle ById successfully",200, vehicleService.getById(id));
     }
-    @PutMapping("/update/{id}")
-    public ApiResponse<VehicleResponse> update(@PathVariable Long id,@RequestBody VehicleRequest vehicleRequest, @RequestParam ("mainImage")MultipartFile mainImage) throws IOException {
+    @PutMapping(value = "/update/{id}", consumes = "multipart/form-data")
+    public ApiResponse<VehicleResponse> update(@PathVariable Long id,@ModelAttribute VehicleRequest vehicleRequest, @RequestParam (value = "mainImage", required = false)MultipartFile mainImage) throws IOException {
         return new ApiResponse<>("update vehicle successfully",201, vehicleService.update(id, vehicleRequest, mainImage));
     }
     @DeleteMapping("/delete/{id}")
